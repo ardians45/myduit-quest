@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { useBudgetStore, useTransactionStore, useGameStore } from '@/stores';
 import { SyncStatus } from '@/components/ui/SyncStatus';
+import { deleteAllCloudData } from '@/lib/sync';
 
 const AVATAR_OPTIONS = [
   '/avatar.png',
@@ -31,6 +32,7 @@ export default function ProfilePage() {
   const [newAvatar, setNewAvatar] = useState(avatar || '/avatar.png');
   const [notifications, setNotifications] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -56,10 +58,18 @@ export default function ProfilePage() {
     }
   };
 
-  const handleDeleteAllData = () => {
+  const handleDeleteAllData = async () => {
+    setIsDeleting(true);
+    try {
+      // Delete cloud data first (if user is logged in)
+      await deleteAllCloudData();
+    } catch (e) {
+      console.error('Failed to wipe cloud data', e);
+    }
+    
+    // Clear local storage and redirect
     localStorage.clear();
-    location.reload(); // Force reload to clear stores from memory if needed or just redirect
-    router.push('/onboarding');
+    window.location.href = '/onboarding';
   };
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -429,15 +439,24 @@ export default function ProfilePage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowDeleteModal(false)}
-                  className="flex-1 py-3 rounded-xl font-bold text-gray-500 hover:bg-gray-100 transition-colors"
+                  disabled={isDeleting}
+                  className="flex-1 py-3 rounded-xl font-bold text-gray-500 hover:bg-gray-100 transition-colors disabled:opacity-50"
                 >
                   Batal
                 </button>
                 <button
                   onClick={handleDeleteAllData}
-                  className="flex-1 py-3 rounded-xl bg-danger text-white font-bold shadow-lg hover:scale-[1.02] transition-transform"
+                  disabled={isDeleting}
+                  className="flex-1 py-3 rounded-xl bg-danger text-white font-bold shadow-lg hover:scale-[1.02] transition-transform disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  Ya, Hapus
+                  {isDeleting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Menghapus...</span>
+                    </>
+                  ) : (
+                    <span>Ya, Hapus</span>
+                  )}
                 </button>
               </div>
             </motion.div>

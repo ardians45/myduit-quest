@@ -119,3 +119,22 @@ export const pullDataFromCloud = async () => {
     return false;
   }
 };
+
+// === WIPE CLOUD DATA ===
+export const deleteAllCloudData = async () => {
+  if (typeof window === 'undefined') return false;
+  const { data: session } = await supabase.auth.getSession();
+  if (!session.session?.user) return false;
+
+  const userId = session.session.user.id;
+  try {
+    // Delete from all tables for the current user
+    await supabase.from('transactions').delete().eq('user_id', userId);
+    await supabase.from('budgets').delete().eq('user_id', userId);
+    await supabase.from('game_state').delete().eq('user_id', userId);
+    return true;
+  } catch (error) {
+    console.error('Error deleting cloud data:', error);
+    return false;
+  }
+};
