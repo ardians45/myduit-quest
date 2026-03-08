@@ -6,6 +6,11 @@
   <h1>🛡️ MyDuit Quest ⚔️</h1>
   <p><b>Aplikasi Pencatat Keuangan Gamifikasi Paling Mutakhir dengan Kecerdasan Buatan (AI)</b></p>
   <p><i>Ubah kebiasaan finansialmu dari membosankan menjadi petualangan RPG yang epik!</i></p>
+  
+  <p>
+    <b>🔥 Coba Web-nya Sekarang:</b><br/>
+    <a href="https://myduit-quest.vercel.app/" target="_blank">👉 <b>https://myduit-quest.vercel.app/</b> 👈</a>
+  </p>
 
   <p>
     <a href="#-kenapa-myduit-quest">Kenapa MyDuit Quest?</a> •
