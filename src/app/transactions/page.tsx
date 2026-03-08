@@ -172,10 +172,10 @@ export default function TransactionsPage() {
                     <motion.div
                       key={transaction.id}
                       layout
-                      className="flex items-center justify-between p-3 hover:bg-white/60 rounded-xl transition-colors group"
+                      className="flex flex-row items-center justify-between p-3 hover:bg-white/60 rounded-xl transition-colors group gap-2"
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${
+                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
                           transaction.type === 'expense' 
                             ? 'bg-red-50 text-danger' 
                             : 'bg-green-50 text-success'
@@ -184,8 +184,8 @@ export default function TransactionsPage() {
                             {CATEGORY_INFO[transaction.category]?.icon || 'inventory_2'}
                           </span>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-bold text-gray-800 text-sm">
+                        <div className="min-w-0 pr-2 flex-1">
+                          <p className="font-bold text-gray-800 text-sm truncate">
                             {CATEGORY_INFO[transaction.category]?.label || 'Lainnya'}
                           </p>
                           {transaction.note && (
@@ -195,15 +195,20 @@ export default function TransactionsPage() {
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      
+                      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 flex-shrink-0">
                         <span className={`font-bold text-sm whitespace-nowrap ${
                           transaction.type === 'expense' ? 'text-danger' : 'text-success'
                         }`}>
                           {transaction.type === 'expense' ? '-' : '+'}Rp {formatCurrency(transaction.amount)}
                         </span>
+                        
                         <button
-                          onClick={() => setDeleteId(transaction.id)}
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-danger transition-all opacity-0 group-hover:opacity-100"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteId(transaction.id);
+                          }}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center bg-red-50 text-danger sm:bg-transparent sm:text-gray-400 sm:hover:bg-red-50 sm:hover:text-danger transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                         >
                           <span className="material-symbols-outlined text-[18px]">delete</span>
                         </button>
