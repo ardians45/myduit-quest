@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { syncTransactionToCloud, syncDeleteTransactionToCloud } from '@/lib/sync';
 
 export interface Transaction {
   id: string;
@@ -42,20 +43,27 @@ export const useTransactionStore = create<TransactionState>()(
         set((state) => ({
           transactions: [newTransaction, ...state.transactions],
         }));
+        syncTransactionToCloud(newTransaction);
       },
       
       editTransaction: (id, updates) => {
-        set((state) => ({
-          transactions: state.transactions.map((t) =>
+        set((state) => {
+          const newTransactions = state.transactions.map((t) =>
             t.id === id ? { ...t, ...updates } : t
-          ),
-        }));
+          );
+          
+          const updatedTx = newTransactions.find(t => t.id === id);
+          if (updatedTx) syncTransactionToCloud(updatedTx);
+          
+          return { transactions: newTransactions };
+        });
       },
       
       deleteTransaction: (id) => {
         set((state) => ({
           transactions: state.transactions.filter((t) => t.id !== id),
         }));
+        syncDeleteTransactionToCloud(id);
       },
       
       getTransactionsByDate: (date) => {

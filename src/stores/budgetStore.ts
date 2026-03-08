@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { syncBudgetToCloud } from '@/lib/sync';
 
 interface BudgetState {
   monthlyBudget: number;
@@ -20,9 +21,15 @@ export const useBudgetStore = create<BudgetState>()(
       isOnboarded: false,
       _hasHydrated: false,
       
-      setMonthlyBudget: (budget) => set({ monthlyBudget: budget }),
+      setMonthlyBudget: (budget) => {
+        set({ monthlyBudget: budget });
+        syncBudgetToCloud();
+      },
       
-      completeOnboarding: () => set({ isOnboarded: true }),
+      completeOnboarding: () => {
+        set({ isOnboarded: true });
+        syncBudgetToCloud();
+      },
       
       setHasHydrated: (state) => set({ _hasHydrated: state }),
       

@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { syncGameToCloud } from '@/lib/sync';
 
 // ===== DECORATION CATALOG =====
 export interface DecorationItem {
@@ -73,16 +74,20 @@ export const useGameStore = create<GameState>()(
       
       updateProfile: (username, avatar) => {
         set({ username, avatar });
+        syncGameToCloud();
       },
 
       addXP: (amount) => {
         set((state) => {
           const newXP = state.xp + amount;
           const newLevel = Math.floor(newXP / XP_PER_LEVEL) + 1;
-          return {
+          const result = {
             xp: newXP,
             level: newLevel,
           };
+          // Schedule sync after state update
+          setTimeout(() => syncGameToCloud(), 0);
+          return result;
         });
       },
       
@@ -90,32 +95,43 @@ export const useGameStore = create<GameState>()(
         const today = new Date().toISOString().split('T')[0];
         const lastDate = get().lastTransactionDate;
         
+        let shouldSync = false;
+
         if (!lastDate) {
           set({ streak: 1, lastTransactionDate: today });
-          return;
+          shouldSync = true;
+        } else {
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yesterdayStr = yesterday.toISOString().split('T')[0];
+          
+          if (lastDate === today) {
+            return;
+          } else if (lastDate === yesterdayStr) {
+            set((state) => ({
+              streak: state.streak + 1,
+              lastTransactionDate: today,
+            }));
+            shouldSync = true;
+          } else {
+            set({ streak: 1, lastTransactionDate: today });
+            shouldSync = true;
+          }
         }
         
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = yesterday.toISOString().split('T')[0];
-        
-        if (lastDate === today) {
-          return;
-        } else if (lastDate === yesterdayStr) {
-          set((state) => ({
-            streak: state.streak + 1,
-            lastTransactionDate: today,
-          }));
-        } else {
-          set({ streak: 1, lastTransactionDate: today });
+        if (shouldSync) {
+          syncGameToCloud();
         }
       },
       
       unlockAchievement: (achievement) => {
+        let changed = false;
         set((state) => {
           if (state.achievements.includes(achievement)) return state;
+          changed = true;
           return { achievements: [...state.achievements, achievement] };
         });
+        if (changed) syncGameToCloud();
       },
       
       toggleDecoration: (decorationId) => {
@@ -130,6 +146,7 @@ export const useGameStore = create<GameState>()(
           // Add
           set({ activeDecorations: [...activeDecorations, decorationId] });
         }
+        syncGameToCloud();
       },
       
       isDecorationUnlocked: (decorationId) => {

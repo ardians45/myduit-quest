@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { useBudgetStore, useTransactionStore, useGameStore } from '@/stores';
+import { SyncStatus } from '@/components/ui/SyncStatus';
 
 const AVATAR_OPTIONS = [
   '/avatar.png',
@@ -29,6 +30,11 @@ export default function ProfilePage() {
   const [newUsername, setNewUsername] = useState(username || 'Komandan');
   const [newAvatar, setNewAvatar] = useState(avatar || '/avatar.png');
   const [notifications, setNotifications] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   const levelProgress = getLevelProgress();
 
@@ -132,6 +138,18 @@ export default function ProfilePage() {
       fileInputRef.current.value = '';
     }
   };
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-bg-light font-display pb-32 relative overflow-hidden flex items-center justify-center">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="w-16 h-16 rounded-full bg-gray-200 mb-4"></div>
+          <div className="h-4 w-32 bg-gray-200 rounded mb-2"></div>
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-bg-light font-display pb-32 relative overflow-hidden">
@@ -259,7 +277,9 @@ export default function ProfilePage() {
 
           <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider pl-2 mt-2">Data & Keamanan</h3>
           
-          <div className="glass-card rounded-2xl overflow-hidden divide-y divide-gray-50">
+          <SyncStatus />
+          
+          <div className="glass-card rounded-2xl overflow-hidden divide-y divide-gray-50 mt-4">
             <button 
               onClick={() => handleExport('json')}
               className="w-full p-4 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
