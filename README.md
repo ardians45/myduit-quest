@@ -75,8 +75,8 @@ Ikuti langkah-langkah di bawah ini untuk menjalankan aplikasi secara lokal di ko
 
 1. **Clone repository ini**
    ```bash
-   git clone https://github.com/username/fin-quest.git
-   cd fin-quest
+   git clone https://github.com/ardians45/myduit-quest.git
+   cd myduit-quest
    ```
 
 2. **Install dependensi**
@@ -103,7 +103,7 @@ Ikuti langkah-langkah di bawah ini untuk menjalankan aplikasi secara lokal di ko
 ## 📁 Struktur Direktori Utama
 
 ```
-fin-quest/
+myduit-quest/
 ├── src/
 │   ├── app/                # Next.js App Router (Halaman & Routing)
 │   │   ├── dashboard/      # Menu Utama (Benteng, Stats, Tips)
