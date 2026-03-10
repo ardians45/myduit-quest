@@ -43,15 +43,19 @@ export default function DashboardPage() {
   
   // Mounted state to avoid hydration mismatch
   const [mounted, setMounted] = useState(false);
-  const [currentTipIndex, setCurrentTipIndex] = useState(0);
+  const [currentTipIndex, setCurrentTipIndex] = useState(() => Math.floor(Math.random() * GEN_Z_TIPS.length));
   
   useEffect(() => {
     setMounted(true);
     
     // Tips rotator
     const interval = setInterval(() => {
-      setCurrentTipIndex((prev) => (prev + 1) % GEN_Z_TIPS.length);
-    }, 15000); // Rotates every 7 seconds
+      setCurrentTipIndex((prev) => {
+        let next;
+        do { next = Math.floor(Math.random() * GEN_Z_TIPS.length); } while (next === prev && GEN_Z_TIPS.length > 1);
+        return next;
+      });
+    }, 15000); // Rotates every 15 seconds
     
     return () => clearInterval(interval);
   }, []);
@@ -428,7 +432,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Premium Tips Ticker */}
-            <div className="w-full mt-1 mb-4 group cursor-pointer" onClick={() => setCurrentTipIndex((prev) => (prev + 1) % GEN_Z_TIPS.length)} title="Klik untuk ganti tips">
+            <div className="w-full mt-1 mb-4 group cursor-pointer" onClick={() => setCurrentTipIndex((prev) => { let next; do { next = Math.floor(Math.random() * GEN_Z_TIPS.length); } while (next === prev && GEN_Z_TIPS.length > 1); return next; })} title="Klik untuk ganti tips">
                <div className="relative glass-card rounded-2xl p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 hover:border-primary/30 transition-all overflow-hidden bg-gradient-to-r from-white/80 to-indigo-50/50 backdrop-blur-xl">
                  
                  {/* Decorative background blur */}
