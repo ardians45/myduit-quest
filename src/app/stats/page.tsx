@@ -11,19 +11,47 @@ export default function StatsPage() {
   const [mounted, setMounted] = useState(false);
   const [isCustomizing, setIsCustomizing] = useState(false);
   const [customPercents, setCustomPercents] = useState({ needs: 50, wants: 30, savings: 20 });
-  const { transactions, getTotalExpenseThisMonth, getTotalIncomeThisMonth } = useTransactionStore();
+  const { transactions } = useTransactionStore();
   const { monthlyBudget, allocations, setAllocations } = useBudgetStore();
-  const totalExpense = getTotalExpenseThisMonth();
-  const totalIncome = getTotalIncomeThisMonth();
+  
+  // Month selection state
+  const [selectedMonthOffset, setSelectedMonthOffset] = useState(0); // 0 = current, -1 = last month, 1 = next month
+
+  const targetDate = useMemo(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + selectedMonthOffset);
+    return d;
+  }, [selectedMonthOffset]);
+
+  const currentMonth = targetDate.toISOString().slice(0, 7); // YYYY-MM
+  const lastMonth = useMemo(() => {
+    const d = new Date(targetDate);
+    d.setMonth(d.getMonth() - 1);
+    return d.toISOString().slice(0, 7);
+  }, [targetDate]);
+
+  const totalExpense = useMemo(() => {
+    return transactions.filter(t => t.type === 'expense' && t.date.startsWith(currentMonth)).reduce((sum, t) => sum + t.amount, 0);
+  }, [transactions, currentMonth]);
+
+  const totalIncome = useMemo(() => {
+    return transactions.filter(t => t.type === 'income' && t.date.startsWith(currentMonth)).reduce((sum, t) => sum + t.amount, 0);
+  }, [transactions, currentMonth]);
+
   const netBalance = totalIncome - totalExpense;
+
+  const handlePrevMonth = () => {
+    if (selectedMonthOffset > -12) setSelectedMonthOffset(prev => prev - 1);
+  };
+  const handleNextMonth = () => {
+    if (selectedMonthOffset < 12) setSelectedMonthOffset(prev => prev + 1);
+  };
+
+  const monthLabel = targetDate.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // === NEW: Calculate insights data ===
-  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
-  const lastMonth = new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().slice(0, 7);
 
   // 1. Daily Spending Pattern
   const dailyPattern = useMemo(() => {
@@ -221,7 +249,14 @@ export default function StatsPage() {
           <div className="absolute right-0 top-0 w-32 h-32 bg-gradient-to-bl from-primary/10 to-transparent rounded-bl-full pointer-events-none"></div>
           
           <div className="flex flex-col gap-5 relative z-10">
-            <span className="text-gray-500 text-sm font-bold uppercase tracking-wider">Ringkasan Bulan Ini</span>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-500 text-xs sm:text-sm font-bold uppercase tracking-wider">Ringkasan</span>
+              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 z-20">
+                <button onClick={handlePrevMonth} disabled={selectedMonthOffset <= -12} className="w-7 h-7 flex items-center justify-center rounded hover:bg-white disabled:opacity-30 transition-colors shadow-sm"><span className="material-symbols-outlined text-[18px]">chevron_left</span></button>
+                <span className="text-xs font-bold w-20 text-center text-gray-700">{selectedMonthOffset === 0 ? 'Bulan Ini' : monthLabel}</span>
+                <button onClick={handleNextMonth} disabled={selectedMonthOffset >= 12} className="w-7 h-7 flex items-center justify-center rounded hover:bg-white disabled:opacity-30 transition-colors shadow-sm"><span className="material-symbols-outlined text-[18px]">chevron_right</span></button>
+              </div>
+            </div>
             
             {/* Pie Chart + Stats Row */}
             <div className="flex items-center gap-5">
@@ -595,7 +630,7 @@ export default function StatsPage() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-gray-800">Kategori</h2>
             <button className="text-primary text-xs font-bold bg-primary/5 px-2 py-1 rounded-lg">
-              Bulan Ini
+              {selectedMonthOffset === 0 ? 'Bulan Ini' : monthLabel}
             </button>
           </div>
 

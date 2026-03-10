@@ -20,6 +20,19 @@ const GEN_Z_TIPS = [
   "💡 Catet pengeluaran emang ribet, tapi lebih ribet kalo tanggal tua nangis di pojokan."
 ];
 
+const CATEGORY_INFO: Record<string, { label: string; icon: string }> = {
+  food: { label: 'Makanan', icon: 'restaurant' },
+  transport: { label: 'Transportasi', icon: 'directions_car' },
+  shopping: { label: 'Belanja', icon: 'shopping_bag' },
+  entertainment: { label: 'Hiburan', icon: 'sports_esports' },
+  education: { label: 'Pendidikan', icon: 'school' },
+  health: { label: 'Kesehatan', icon: 'medical_services' },
+  utilities: { label: 'Utilitas', icon: 'bolt' },
+  salary: { label: 'Gaji', icon: 'payments' },
+  gift: { label: 'Hadiah', icon: 'redeem' },
+  other: { label: 'Lainnya', icon: 'inventory_2' },
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const { isOnboarded, monthlyBudget, getHP, getHPStatus, getRemainingBudget, _hasHydrated } = useBudgetStore();
@@ -366,6 +379,52 @@ export default function DashboardPage() {
                      </p>
                   </div>
                </div>
+            </div>
+
+            {/* 5. 📜 RECENT TRANSACTIONS */}
+            <div className="w-full mt-2">
+              <div className="flex items-center justify-between mb-3 px-1">
+                <h3 className="text-sm font-bold text-gray-800">Transaksi Terakhir</h3>
+                <button onClick={() => router.push('/transactions')} className="text-[10px] font-bold text-primary hover:underline">Lihat Semua</button>
+              </div>
+              
+              {transactions.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                  {transactions.slice(0, 3).map(tx => (
+                    <div 
+                      key={tx.id} 
+                      onClick={() => router.push(`/transactions/${tx.id}`)}
+                      className="glass-card rounded-2xl p-3 flex items-center justify-between hover:bg-white/60 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                            tx.type === 'expense' ? 'bg-red-50 text-danger' : 'bg-green-50 text-success'
+                          }`}>
+                          <span className="material-symbols-outlined text-[18px]">
+                            {CATEGORY_INFO[tx.category]?.icon || 'inventory_2'}
+                          </span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-bold text-gray-800">{CATEGORY_INFO[tx.category]?.label || 'Lainnya'}</span>
+                          <span className="text-[10px] text-gray-500 truncate max-w-[120px]">{tx.note || (tx.type === 'expense' ? 'Pengeluaran' : 'Pemasukan')}</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className={`text-sm font-bold ${tx.type === 'expense' ? 'text-danger' : 'text-success'}`}>
+                          {tx.type === 'expense' ? '-' : '+'}Rp {formatIDR(tx.amount)}
+                        </span>
+                        <span className="text-[10px] text-gray-400">
+                          {new Date(tx.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="glass-card rounded-2xl p-4 text-center">
+                  <span className="text-xs text-gray-500">Belum ada transaksi</span>
+                </div>
+              )}
             </div>
 
             {/* Tips Ticker */}
