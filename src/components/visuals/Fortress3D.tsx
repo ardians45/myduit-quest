@@ -314,19 +314,19 @@ export const Fortress3D: React.FC<Fortress3DProps> = ({
         {hasDecor('fountain') && <PremiumFountain />}
 
         {/* LAYER 6: STRUCTURE DECORATIONS */}
-        {level >= 3 && hasDecor('red_flag') && (
+        {hasDecor('red_flag') && (
            <><FlagDecor x={75} y={15} color="#ef4444" /><FlagDecor x={225} y={15} color="#ef4444" /></>
         )}
-        {level >= 3 && hasDecor('blue_flag') && (
+        {hasDecor('blue_flag') && (
            <><FlagDecor x={75} y={15} color="#3b82f6" /><FlagDecor x={225} y={15} color="#3b82f6" /></>
         )}
-        {level >= 3 && hasDecor('gold_flag') && (
+        {hasDecor('gold_flag') && (
            <><FlagDecor x={75} y={15} color="#fbbf24" goldStar /><FlagDecor x={225} y={15} color="#fbbf24" goldStar /></>
         )}
-        {level >= 2 && hasDecor('wall_torch') && (
+        {hasDecor('wall_torch') && (
           <><PremiumTorch x={110} y={140} /><PremiumTorch x={190} y={140} /></>
         )}
-        {level >= 2 && hasDecor('blue_torch') && (
+        {hasDecor('blue_torch') && (
           <><PremiumTorch x={110} y={140} isBlue /><PremiumTorch x={190} y={140} isBlue /></>
         )}
         {hasDecor('royal_banner') && (
