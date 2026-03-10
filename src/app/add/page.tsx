@@ -169,6 +169,8 @@ function AddTransactionContent() {
         <div className="absolute bottom-[0px] left-[-50px] w-[200px] h-[200px] bg-pink-300/20 rounded-full blur-3xl"></div>
       </div>
 
+      {/* Desktop Container Wrapper */}
+      <div className="flex flex-col md:max-w-5xl md:mx-auto md:px-6 relative z-10 w-full flex-1 overflow-hidden">
       <AnimatePresence>
         {isSuccess && (
           <motion.div 
@@ -347,17 +349,18 @@ function AddTransactionContent() {
       </main>
 
       {/* Floating Submit Button */}
-      <div className="fixed bottom-6 left-0 w-full px-6 z-30">
+      <div className="fixed bottom-6 left-0 right-0 mx-auto w-full px-6 z-30 pointer-events-none md:max-w-5xl">
         <button
           onClick={handleSubmit}
           disabled={!amount || Number(amount) === 0}
-          className="w-full py-4 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white font-bold text-lg shadow-glow hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="pointer-events-auto w-full py-4 rounded-xl flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-primary-dark text-white font-bold text-lg shadow-glow hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span>Simpan Transaksi</span>
           <span className="material-symbols-outlined">check</span>
         </button>
       </div>
 
+      </div>
     </div>
   );
 }

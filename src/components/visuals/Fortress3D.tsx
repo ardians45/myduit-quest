@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useId } from 'react';
 import { motion } from 'framer-motion';
 
 interface Fortress3DProps {
@@ -18,306 +18,365 @@ export const Fortress3D: React.FC<Fortress3DProps> = ({
   showEffects = true,
   activeDecorations = [],
 }) => {
+  // Unique prefix for SVG IDs to avoid conflicts when multiple instances exist
+  const uid = useId().replace(/:/g, '');
+
   // --- STATE LOGIC ---
   const isHealthy = hp > 60;
   const isCritical = hp <= 25;
   const isDestroyed = hp <= 0;
 
-  // Helper to check if a decoration is active
   const hasDecor = (id: string) => activeDecorations.includes(id);
 
-  // Dynamic Colors (Pastel Palette)
-  const colors = {
-    grass: isCritical ? '#57534e' : '#86efac',
-    grassSide: isCritical ? '#44403c' : '#4ade80',
-    dirt: isCritical ? '#292524' : '#d6d3d1',
-    sky: isCritical ? '#450a0a' : '#dbeafe',
-    water: isCritical ? '#ef4444' : '#60a5fa',
-    wall: isCritical ? '#57534e' : '#e5e7eb',
-    roof: isCritical ? '#7f1d1d' : '#fcd34d',
-    flame: '#fb923c',
-    flameBlue: '#60a5fa',
+  // Dynamic Colors
+  const theme = {
+    grassTop: isCritical ? '#44403c' : '#4ade80',
+    grassBottom: isCritical ? '#292524' : '#16a34a',
+    dirtTop: isCritical ? '#292524' : '#a8a29e',
+    dirtBottom: isCritical ? '#1c1917' : '#57534e',
+    wallLight: isCritical ? '#57534e' : '#f3f4f6',
+    wallDark: isCritical ? '#44403c' : '#d1d5db',
+    roofLight: isCritical ? '#7f1d1d' : '#fbbf24',
+    roofDark: isCritical ? '#450a0a' : '#d97706',
+    waterLight: isCritical ? '#ef4444' : '#60a5fa',
+    waterDark: isCritical ? '#991b1b' : '#2563eb',
   };
 
-  // --- SVG COMPONENTS (Modular Assets) ---
+  // Helper to make unique urls
+  const u = (name: string) => `url(#${uid}${name})`;
+  const fid = (name: string) => `${uid}${name}`;
 
+  // --- SVG DEFINITIONS ---
+  const Defs = () => (
+    <defs>
+      <linearGradient id={fid('grassGrad')} x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor={theme.grassTop} />
+        <stop offset="100%" stopColor={theme.grassBottom} />
+      </linearGradient>
+      <linearGradient id={fid('dirtGrad')} x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor={theme.dirtTop} />
+        <stop offset="100%" stopColor={theme.dirtBottom} />
+      </linearGradient>
+      <linearGradient id={fid('wallGrad')} x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor={theme.wallLight} />
+        <stop offset="100%" stopColor={theme.wallDark} />
+      </linearGradient>
+      <linearGradient id={fid('roofGrad')} x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor={theme.roofLight} />
+        <stop offset="100%" stopColor={theme.roofDark} />
+      </linearGradient>
+      <linearGradient id={fid('waterGrad')} x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor={theme.waterLight} />
+        <stop offset="100%" stopColor={theme.waterDark} />
+      </linearGradient>
+      <linearGradient id={fid('towerGrad')} x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor={theme.wallLight} />
+        <stop offset="30%" stopColor={theme.wallLight} />
+        <stop offset="100%" stopColor={theme.wallDark} />
+      </linearGradient>
+
+      <filter id={fid('glow-orange')} x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+        <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id={fid('glow-blue')} x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+        <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id={fid('drop-shadow')} x="-20%" y="-20%" width="150%" height="150%">
+        <feDropShadow dx="3" dy="5" stdDeviation="3" floodColor="#000000" floodOpacity="0.25"/>
+      </filter>
+    </defs>
+  );
+
+  // --- BASE ISLAND ---
   const BaseSite = () => (
-    <g id="base-site">
-      <path d="M50 140 Q150 180 250 140 V200 Q150 240 50 200 Z" fill={colors.dirt} />
-      <path d="M50 140 Q150 180 250 140 V160 Q150 200 50 160 Z" fill="#a8a29e" />
-      <ellipse cx="150" cy="140" rx="100" ry="40" fill={colors.grassSide} />
-      <ellipse cx="150" cy="135" rx="100" ry="40" fill={colors.grass} />
-      
-      {/* Water Moat (Level 3+) */}
+    <g>
+      <path d="M50 160 Q150 200 250 160 C230 220 170 250 150 240 C130 250 70 220 50 160 Z" fill={u('dirtGrad')} filter={u('drop-shadow')} />
+      <path d="M40 140 Q150 180 260 140 V160 Q150 200 40 160 Z" fill={theme.dirtTop} />
+      <path d="M40 140 Q150 180 260 140 V145 Q150 185 40 145 Z" fill={theme.grassBottom} />
+      <ellipse cx="150" cy="135" rx="110" ry="45" fill={u('grassGrad')} filter={u('drop-shadow')} />
+      <ellipse cx="120" cy="125" rx="40" ry="15" fill="#fef08a" opacity="0.1" />
+      <ellipse cx="180" cy="145" rx="30" ry="10" fill="#fef08a" opacity="0.1" />
       {level >= 3 && (
-        <path d="M80 140 Q150 170 220 140 Q210 160 150 160 Q90 160 80 140" fill={colors.water} opacity="0.8">
-           <animate attributeName="opacity" values="0.6;0.9;0.6" dur="3s" repeatCount="indefinite" />
-        </path>
+        <g>
+           <path d="M70 140 Q150 175 230 140 Q215 165 150 165 Q85 165 70 140" fill={u('waterGrad')} opacity="0.85">
+              <animate attributeName="opacity" values="0.7;0.9;0.7" dur="4s" repeatCount="indefinite" />
+           </path>
+           <path d="M90 145 Q150 170 210 145" stroke="#fff" strokeWidth="1.5" fill="none" opacity="0.3">
+             <animate attributeName="opacity" values="0.1;0.4;0.1" dur="2s" repeatCount="indefinite" />
+           </path>
+        </g>
       )}
     </g>
   );
 
-  const MainKeep = () => (
-    <g id="main-keep" transform="translate(110, 80)">
-      <ellipse cx="40" cy="55" rx="35" ry="10" fill="black" opacity="0.2" />
-      <rect x="10" y="20" width="60" height="40" rx="5" fill="#fef3c7" />
-      <rect x="10" y="20" width="10" height="40" fill="#fde68a" />
-      <path d="M5 25 L40 0 L75 25 Z" fill={colors.roof} />
-      <path d="M5 25 L40 0 L40 25 Z" fill="black" opacity="0.1" />
-      <path d="M30 60 L30 40 Q40 30 50 40 L50 60 Z" fill="#78350f" />
-      <circle cx="25" cy="35" r="4" fill="#3b0764" />
-      <circle cx="55" cy="35" r="4" fill="#3b0764" />
+  // --- MAIN KEEP ---
+  const MainKeep = () => {
+    const scale = level >= 5 ? 1.1 : 1;
+    const yOffset = level >= 5 ? -5 : 0;
+    return (
+      <g transform={`translate(110, ${70 + yOffset}) scale(${scale})`} filter={u('drop-shadow')}>
+        <ellipse cx="40" cy="65" rx="40" ry="15" fill="#000" opacity="0.25" />
+        <rect x="10" y="20" width="60" height="45" rx="3" fill={u('wallGrad')} />
+        <rect x="10" y="20" width="15" height="45" rx="0" fill={theme.wallLight} opacity="0.8" />
+        {level >= 4 && (
+          <g fill={theme.wallDark}>
+            <rect x="8" y="15" width="10" height="5" />
+            <rect x="22" y="15" width="10" height="5" />
+            <rect x="36" y="15" width="10" height="5" />
+            <rect x="50" y="15" width="10" height="5" />
+            <rect x="64" y="15" width="10" height="5" />
+          </g>
+        )}
+        <path d="M0 20 L40 -10 L80 20 Z" fill={u('roofGrad')} />
+        <path d="M0 20 L40 -10 L40 20 Z" fill="#fff" opacity="0.15" />
+        <path d="M30 65 L30 40 Q40 30 50 40 L50 65 Z" fill="#451a03" />
+        <path d="M32 65 L32 42 Q40 34 48 42 L48 65 Z" fill="#78350f" />
+        <circle cx="47" cy="52" r="1.5" fill="#fbbf24" />
+        <g fill="#1e1b4b">
+          <rect x="20" y="30" width="6" height="10" rx="3" />
+          <rect x="54" y="30" width="6" height="10" rx="3" />
+          {level >= 2 && <circle cx="40" cy="15" r="4" fill="#312e81" stroke="#9ca3af" strokeWidth="1.5" />}
+        </g>
+        {!isCritical && (
+          <g fill="#fde047" opacity="0.8" filter={u('glow-orange')}>
+             <rect x="21" y="32" width="4" height="6" rx="2" />
+             <rect x="55" y="32" width="4" height="6" rx="2" />
+          </g>
+        )}
+      </g>
+    );
+  };
+
+  const WallSegment = ({ x = 0, y = 0, scale = 1, width = 45 }: { x?: number, y?: number, scale?: number, width?: number }) => (
+    <g transform={`translate(${x}, ${90 + y}) scale(${scale})`} filter={u('drop-shadow')}>
+      <rect x="0" y="0" width={width} height="35" rx="2" fill={u('wallGrad')} />
+      <rect x="0" y="0" width={width} height="4" fill={theme.wallLight} />
+      <rect x="0" y="0" width="8" height="35" fill="#fff" opacity="0.1" />
+      <g fill={u('wallGrad')}>
+         {Array.from({ length: Math.floor(width / 14) }).map((_, i) => (
+           <rect key={i} x={2 + i * 14} y="-6" width="10" height="6" />
+         ))}
+      </g>
+      <g stroke={theme.wallDark} strokeWidth="1" opacity="0.5">
+        <line x1="10" y1="12" x2="20" y2="12" />
+        <line x1="25" y1="22" x2="35" y2="22" />
+        <line x1="5" y1="28" x2="15" y2="28" />
+      </g>
     </g>
   );
 
-  const WallSegment = ({ x = 0, scale = 1 }: { x?: number, scale?: number }) => (
-    <g transform={`translate(${x}, 100) scale(${scale})`}>
-      <rect x="0" y="0" width="40" height="30" rx="4" fill={colors.wall} />
-      <rect x="0" y="0" width="8" height="30" fill="black" opacity="0.1" />
-      <rect x="2" y="-5" width="8" height="5" fill={colors.wall} />
-      <rect x="16" y="-5" width="8" height="5" fill={colors.wall} />
-      <rect x="30" y="-5" width="8" height="5" fill={colors.wall} />
+  const CircularTower = ({ x = 0, y = 0, height = 70 }: { x?: number, y?: number, height?: number }) => (
+    <g transform={`translate(${x}, ${y})`} filter={u('drop-shadow')}>
+       <ellipse cx="15" cy={height + 5} rx="18" ry="7" fill="#000" opacity="0.3" />
+       <rect x="0" y="10" width="30" height={height} rx="2" fill={u('towerGrad')} />
+       <rect x="-2" y="5" width="34" height="8" rx="1" fill={theme.wallDark} />
+       <rect x="-2" y="5" width="34" height="2" fill={theme.wallLight} />
+       <path d="M-5 5 L15 -25 L35 5 Z" fill={u('roofGrad')} />
+       <path d="M-5 5 L15 -25 L15 5 Z" fill="#fff" opacity="0.2" />
+       <line x1="15" y1="-25" x2="15" y2="-40" stroke="#9ca3af" strokeWidth="2" />
+       <rect x="12" y="25" width="6" height="12" rx="3" fill="#1e1b4b" />
+       {!isCritical && <rect x="13" y="27" width="4" height="8" rx="2" fill="#fde047" opacity="0.8" filter={u('glow-orange')} />}
     </g>
   );
 
-  const Tower = ({ x = 0, y = 0 }: { x?: number, y?: number }) => (
+  const EntranceGate = () => (
+    <g transform="translate(120, 105)" filter={u('drop-shadow')}>
+       <path d="M0 45 V0 Q30 -25 60 0 V45 H50 V15 Q30 0 10 15 V45 Z" fill={u('wallGrad')} />
+       <path d="M10 45 V15 Q30 0 50 15 V45 Z" fill="#1c1917" />
+       <g stroke="#4b5563" strokeWidth="2.5">
+         <line x1="15" y1="5" x2="15" y2="45" />
+         <line x1="25" y1="0" x2="25" y2="45" />
+         <line x1="35" y1="0" x2="35" y2="45" />
+         <line x1="45" y1="5" x2="45" y2="45" />
+         <line x1="10" y1="15" x2="50" y2="15" />
+         <line x1="10" y1="25" x2="50" y2="25" />
+         <line x1="10" y1="35" x2="50" y2="35" />
+       </g>
+    </g>
+  );
+
+  // ===== DECORATIONS =====
+  const FlagDecor = ({ x, y, color = "#ef4444", goldStar = false }: { x: number, y: number, color?: string, goldStar?: boolean }) => (
     <g transform={`translate(${x}, ${y})`}>
-       <rect x="0" y="20" width="30" height="60" rx="4" fill={colors.wall} />
-       <rect x="0" y="20" width="10" height="60" fill="black" opacity="0.1" />
-       <path d="M-5 20 L15 -10 L35 20 Z" fill="#3b82f6" />
-       <path d="M-5 20 L15 -10 L15 20 Z" fill="black" opacity="0.1" />
-       <line x1="15" y1="-10" x2="15" y2="-25" stroke="#9ca3af" strokeWidth="2" />
-       <path d="M15 -25 L30 -20 L15 -15 Z" fill="#ef4444">
-          <animate attributeName="d" values="M15 -25 L30 -20 L15 -15 Z; M15 -25 L30 -22 L15 -15 Z; M15 -25 L30 -20 L15 -15 Z" dur="1s" repeatCount="indefinite" />
-       </path>
-    </g>
-  );
-
-  const Gate = () => (
-    <g transform="translate(130, 110)">
-       <path d="M-10 40 V0 Q20 -20 50 0 V40 H40 V10 Q20 0 0 10 V40 H-10 Z" fill={colors.wall} />
-       <line x1="5" y1="10" x2="5" y2="40" stroke="#4b5563" strokeWidth="2" />
-       <line x1="15" y1="5" x2="15" y2="40" stroke="#4b5563" strokeWidth="2" />
-       <line x1="25" y1="5" x2="25" y2="40" stroke="#4b5563" strokeWidth="2" />
-       <line x1="35" y1="10" x2="35" y2="40" stroke="#4b5563" strokeWidth="2" />
-    </g>
-  );
-
-  // ===== DECORATION COMPONENTS =====
-
-  const RedFlagDecor = ({ x, y }: { x: number, y: number }) => (
-    <g transform={`translate(${x}, ${y})`}>
-      <line x1="0" y1="0" x2="0" y2="40" stroke="#b45309" strokeWidth="2" />
-      <path d="M0 0 C 10 5, 20 -5, 30 0 L 0 15 Z" fill="#ef4444">
-         <animate attributeName="d" values="M0 0 C 10 5, 20 -5, 30 0 L 0 15 Z; M0 0 C 10 -5, 20 5, 30 0 L 0 15 Z; M0 0 C 10 5, 20 -5, 30 0 L 0 15 Z" dur="2s" repeatCount="indefinite" />
+      <path d="M0 0 Q 15 5, 30 0 L 0 18 Z" fill={color}>
+         <animate attributeName="d" values="M0 0 Q 15 5, 30 0 L 0 18 Z; M0 0 Q 15 -5, 30 0 L 0 18 Z; M0 0 Q 15 5, 30 0 L 0 18 Z" dur="2s" repeatCount="indefinite" />
       </path>
+      {goldStar && (
+         <path d="M12 6 l2 -4 l2 4 l4 1 l-3 3 l1 4 l-4 -2 l-4 2 l1 -4 l-3 -3 z" fill="#fbbf24" transform="scale(0.5) translate(10, 8)" />
+      )}
     </g>
   );
 
-  const BlueFlagDecor = ({ x, y }: { x: number, y: number }) => (
-    <g transform={`translate(${x}, ${y})`}>
-      <line x1="0" y1="0" x2="0" y2="40" stroke="#6b7280" strokeWidth="2" />
-      <path d="M0 0 C 10 5, 20 -5, 30 0 L 0 15 Z" fill="#3b82f6">
-         <animate attributeName="d" values="M0 0 C 10 5, 20 -5, 30 0 L 0 15 Z; M0 0 C 10 -5, 20 5, 30 0 L 0 15 Z; M0 0 C 10 5, 20 -5, 30 0 L 0 15 Z" dur="2.5s" repeatCount="indefinite" />
-      </path>
-    </g>
-  );
+  const PremiumTorch = ({ x, y, isBlue = false }: { x: number, y: number, isBlue?: boolean }) => {
+    const flameColor = isBlue ? '#60a5fa' : '#fb923c';
+    const coreColor = isBlue ? '#fff' : '#fef08a';
+    const filterRef = isBlue ? u('glow-blue') : u('glow-orange');
+    return (
+      <g transform={`translate(${x}, ${y})`}>
+        <path d="M0 0 L6 12 L-6 12 Z" fill="#374151" />
+        <rect x="-2" y="12" width="4" height="4" fill="#fbbf24" />
+        <path d="M0 -10 Q-6 -2, 0 3 Q6 -2, 0 -10 Z" fill={flameColor} filter={filterRef}>
+           <animate attributeName="d" values="M0 -10 Q-6 -2, 0 3 Q6 -2, 0 -10 Z; M0 -12 Q-4 -2, 0 3 Q4 -2, 0 -12 Z; M0 -10 Q-6 -2, 0 3 Q6 -2, 0 -10 Z" dur="0.5s" repeatCount="indefinite" />
+        </path>
+        <circle cx="0" cy="-2" r="2" fill={coreColor}>
+          <animate attributeName="r" values="1.5;2.5;1.5" dur="0.3s" repeatCount="indefinite" />
+        </circle>
+        <circle cx="0" cy="-15" r="1" fill={flameColor} opacity="0">
+           <animate attributeName="cy" values="-5;-25" dur="1.2s" repeatCount="indefinite" />
+           <animate attributeName="opacity" values="0;1;0" dur="1.2s" repeatCount="indefinite" />
+        </circle>
+      </g>
+    );
+  };
 
-  const GoldFlagDecor = ({ x, y }: { x: number, y: number }) => (
-    <g transform={`translate(${x}, ${y})`}>
-      <line x1="0" y1="0" x2="0" y2="40" stroke="#92400e" strokeWidth="2.5" />
-      <path d="M0 0 C 10 5, 20 -5, 30 0 L 0 15 Z" fill="#fbbf24">
-         <animate attributeName="d" values="M0 0 C 10 5, 20 -5, 30 0 L 0 15 Z; M0 0 C 10 -5, 20 5, 30 0 L 0 15 Z; M0 0 C 10 5, 20 -5, 30 0 L 0 15 Z" dur="1.8s" repeatCount="indefinite" />
-      </path>
-      {/* Gold shimmer dot */}
-      <circle cx="15" cy="5" r="2" fill="#fef08a" opacity="0.8">
-        <animate attributeName="opacity" values="0.4;1;0.4" dur="1.5s" repeatCount="indefinite" />
-      </circle>
-    </g>
-  );
-
-  const WallTorchDecor = ({ x, y }: { x: number, y: number }) => (
-    <g transform={`translate(${x}, ${y})`}>
-       <path d="M0 0 L5 10 L-5 10 Z" fill="#4b5563" />
-       <circle cx="0" cy="-5" r="4" fill={colors.flame}>
-          <animate attributeName="r" values="3;5;3" dur="0.5s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.8;1;0.8" dur="0.5s" repeatCount="indefinite" />
-       </circle>
-    </g>
-  );
-
-  const BlueTorchDecor = ({ x, y }: { x: number, y: number }) => (
-    <g transform={`translate(${x}, ${y})`}>
-       <path d="M0 0 L5 10 L-5 10 Z" fill="#6b7280" />
-       <circle cx="0" cy="-5" r="4" fill={colors.flameBlue}>
-          <animate attributeName="r" values="3;6;3" dur="0.6s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.7;1;0.7" dur="0.6s" repeatCount="indefinite" />
-       </circle>
-       {/* Glow */}
-       <circle cx="0" cy="-5" r="8" fill={colors.flameBlue} opacity="0.15">
-          <animate attributeName="r" values="6;10;6" dur="0.6s" repeatCount="indefinite" />
-       </circle>
-    </g>
-  );
-
-  const RoyalBannerDecor = () => (
-    <g transform="translate(143, 65)">
-      {/* Banner pole */}
-      <line x1="7" y1="-5" x2="7" y2="30" stroke="#92400e" strokeWidth="2" />
-      {/* Banner fabric */}
-      <rect x="0" y="-5" width="14" height="20" rx="2" fill="#7c3aed" />
-      {/* Gold trim */}
-      <rect x="0" y="-5" width="14" height="3" rx="1" fill="#fbbf24" />
-      <rect x="0" y="12" width="14" height="3" rx="1" fill="#fbbf24" />
-      {/* Crown symbol */}
-      <path d="M4 3 L7 0 L10 3 L9 7 L5 7 Z" fill="#fbbf24" />
-      {/* Wave animation */}
-      <animateTransform attributeName="transform" type="rotate" values="0 150 80;1 150 80;-1 150 80;0 150 80" dur="3s" repeatCount="indefinite" />
-    </g>
-  );
-
-  const GardenDecor = () => (
-    <g transform="translate(75, 125)">
-      {/* Grass patch */}
-      <ellipse cx="15" cy="12" rx="18" ry="6" fill="#4ade80" opacity="0.8" />
-      {/* Flowers */}
-      <circle cx="8" cy="8" r="3" fill="#f472b6" />
-      <circle cx="8" cy="8" r="1.5" fill="#fbbf24" />
-      <circle cx="20" cy="6" r="3" fill="#a78bfa" />
-      <circle cx="20" cy="6" r="1.5" fill="#fef08a" />
-      <circle cx="14" cy="10" r="2.5" fill="#fb923c" />
-      <circle cx="14" cy="10" r="1" fill="#fef08a" />
-      {/* Stems */}
-      <line x1="8" y1="11" x2="8" y2="14" stroke="#22c55e" strokeWidth="1.5" />
-      <line x1="20" y1="9" x2="20" y2="14" stroke="#22c55e" strokeWidth="1.5" />
-      <line x1="14" y1="12" x2="14" y2="14" stroke="#22c55e" strokeWidth="1.5" />
-    </g>
-  );
-
-  const FountainDecor = () => (
-    <g transform="translate(195, 118)">
-      {/* Basin */}
-      <ellipse cx="15" cy="20" rx="18" ry="6" fill="#94a3b8" />
-      <ellipse cx="15" cy="18" rx="14" ry="4" fill="#60a5fa" opacity="0.7">
-        <animate attributeName="opacity" values="0.5;0.8;0.5" dur="2s" repeatCount="indefinite" />
+  const PremiumFountain = () => (
+    <g transform="translate(200, 110)" filter={u('drop-shadow')}>
+      <ellipse cx="15" cy="22" rx="22" ry="8" fill="#64748b" />
+      <ellipse cx="15" cy="20" rx="22" ry="8" fill="#94a3b8" />
+      <ellipse cx="15" cy="19" rx="18" ry="6" fill={u('waterGrad')} filter={u('glow-blue')} opacity="0.9">
+        <animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite" />
       </ellipse>
-      {/* Pillar */}
-      <rect x="12" y="5" width="6" height="15" rx="2" fill="#d1d5db" />
-      {/* Water spout top */}
-      <circle cx="15" cy="5" r="4" fill="#d1d5db" />
-      {/* Water drops */}
-      <circle cx="10" cy="8" r="1.5" fill="#60a5fa" opacity="0.8">
-        <animate attributeName="cy" values="5;15;5" dur="1.2s" repeatCount="indefinite" />
-        <animate attributeName="opacity" values="0.8;0.2;0.8" dur="1.2s" repeatCount="indefinite" />
-      </circle>
-      <circle cx="20" cy="8" r="1.5" fill="#60a5fa" opacity="0.8">
-        <animate attributeName="cy" values="5;15;5" dur="1.2s" repeatCount="indefinite" begin="0.4s" />
-        <animate attributeName="opacity" values="0.8;0.2;0.8" dur="1.2s" repeatCount="indefinite" begin="0.4s" />
-      </circle>
-      <circle cx="15" cy="3" r="1" fill="#93c5fd" opacity="0.6">
-        <animate attributeName="cy" values="0;12;0" dur="1s" repeatCount="indefinite" begin="0.2s" />
-        <animate attributeName="opacity" values="0.6;0;0.6" dur="1s" repeatCount="indefinite" begin="0.2s" />
-      </circle>
+      <path d="M10 20 L12 5 H18 L20 20 Z" fill="#cbd5e1" />
+      <ellipse cx="15" cy="5" rx="8" ry="3" fill="#94a3b8" />
+      <path d="M13 5 Q15 -5, 17 5" stroke="#93c5fd" strokeWidth="2" fill="none" opacity="0.8">
+         <animate attributeName="d" values="M13 5 Q15 -5, 17 5; M13 5 Q15 -8, 17 5; M13 5 Q15 -5, 17 5" dur="0.8s" repeatCount="indefinite" />
+      </path>
+      {[0, 1, 2].map((i) => {
+        const seed = (i * 137) % 10;
+        return (
+          <circle key={i} cx={10 + seed} cy={10} r="1.5" fill="#bfdbfe" opacity="0">
+            <animate attributeName="cy" values="5;18" dur="1s" repeatCount="indefinite" begin={`${i * 0.3}s`} />
+            <animate attributeName="opacity" values="0;1;0" dur="1s" repeatCount="indefinite" begin={`${i * 0.3}s`} />
+          </circle>
+        );
+      })}
+    </g>
+  );
+
+  const PremiumGarden = () => (
+    <g transform="translate(65, 120)" filter={u('drop-shadow')}>
+      <ellipse cx="20" cy="15" rx="25" ry="10" fill="#3f6212" opacity="0.6" />
+      <circle cx="10" cy="10" r="8" fill="#166534" />
+      <circle cx="12" cy="8" r="6" fill="#22c55e" />
+      <circle cx="30" cy="12" r="7" fill="#14532d" />
+      <circle cx="28" cy="9" r="5" fill="#4ade80" />
+      {[
+        { x: 15, y: 18, color: '#f472b6' },
+        { x: 25, y: 16, color: '#a78bfa' },
+        { x: 8, y: 15, color: '#fb923c' },
+        { x: 32, y: 18, color: '#fcd34d' }
+      ].map((flower, i) => (
+         <g key={i} transform={`translate(${flower.x}, ${flower.y})`}>
+           <line x1="0" y1="0" x2="0" y2="5" stroke="#22c55e" strokeWidth="1.5" />
+           <circle cx="0" cy="0" r="3" fill={flower.color} filter={u('glow-orange')}>
+              <animate attributeName="r" values="2.5;3.5;2.5" dur={`${2 + i * 0.5}s`} repeatCount="indefinite" />
+           </circle>
+           <circle cx="0" cy="0" r="1" fill="#fff" />
+         </g>
+      ))}
     </g>
   );
 
   return (
-    <div className={`relative flex items-center justify-center ${className} ${isDestroyed ? 'grayscale opacity-70' : ''}`}>
+    <div className={`relative flex items-center justify-center w-full h-full overflow-visible ${className} ${isDestroyed ? 'grayscale opacity-70' : ''}`}>
       <motion.svg
-        viewBox="0 0 300 250"
-        className="w-full h-full drop-shadow-2xl"
+        viewBox="0 0 300 260"
+        className="w-full h-full"
+        style={{ overflow: 'visible' }}
         initial={{ y: 0 }}
-        animate={{ y: [0, -10, 0] }}
+        animate={{ y: [0, -12, 0] }}
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
       >
-        {/* === LAYER 1: BASE === */}
+        <Defs />
+
+        {/* LAYER 1: BASE */}
         <BaseSite />
 
-        {/* === LAYER 2: DECORATIONS (Behind structures) === */}
-        {hasDecor('garden') && <GardenDecor />}
-        {hasDecor('fountain') && <FountainDecor />}
+        {/* LAYER 2: BACK TOWERS & WALLS */}
+        {level >= 3 && <CircularTower x={60} y={40} height={60} />}
+        {level >= 3 && <CircularTower x={210} y={40} height={60} />}
+        {level >= 2 && <WallSegment x={90} y={-10} scale={0.9} width={120} />}
 
-        {/* === LAYER 3: BACK STRUCTURES === */}
-        {level >= 3 && <Tower x={70} y={50} />}
-        {level >= 3 && <Tower x={200} y={50} />}
-        {level >= 2 && <WallSegment x={90} scale={0.8} />}
-        {level >= 2 && <WallSegment x={170} scale={0.8} />}
-
-        {/* === LAYER 4: MAIN KEEP === */}
+        {/* LAYER 3: MAIN KEEP */}
         <MainKeep />
 
-        {/* === LAYER 5: FRONT DEFENSES === */}
-        {level >= 2 && <WallSegment x={60} />}
-        {level >= 2 && <WallSegment x={200} />}
-        {level >= 4 && <Gate />}
+        {/* LAYER 4: FRONT DEFENSES */}
+        {level >= 2 && <WallSegment x={40} width={80} />}
+        {level >= 2 && <WallSegment x={180} width={80} />}
+        {level >= 4 && <EntranceGate />}
+        {level >= 5 && <CircularTower x={30} y={80} height={50} />}
+        {level >= 5 && <CircularTower x={240} y={80} height={50} />}
 
-        {/* === LAYER 6: DECORATIONS (On structures) === */}
-        {/* Flags */}
-        {hasDecor('red_flag') && (
-          <>
-            <RedFlagDecor x={115} y={80} />
-            <RedFlagDecor x={185} y={80} />
-          </>
-        )}
-        {hasDecor('blue_flag') && (
-          <>
-            <BlueFlagDecor x={100} y={85} />
-            <BlueFlagDecor x={195} y={85} />
-          </>
-        )}
-        {hasDecor('gold_flag') && (
-          <>
-            <GoldFlagDecor x={108} y={75} />
-            <GoldFlagDecor x={190} y={75} />
-          </>
-        )}
+        {/* LAYER 5: GROUND DECORATIONS */}
+        {hasDecor('garden') && <PremiumGarden />}
+        {hasDecor('fountain') && <PremiumFountain />}
 
-        {/* Torches */}
-        {hasDecor('wall_torch') && (
-          <>
-            <WallTorchDecor x={125} y={130} />
-            <WallTorchDecor x={175} y={130} />
-          </>
+        {/* LAYER 6: STRUCTURE DECORATIONS */}
+        {level >= 3 && hasDecor('red_flag') && (
+           <><FlagDecor x={75} y={15} color="#ef4444" /><FlagDecor x={225} y={15} color="#ef4444" /></>
         )}
-        {hasDecor('blue_torch') && (
-          <>
-            <BlueTorchDecor x={90} y={125} />
-            <BlueTorchDecor x={210} y={125} />
-          </>
+        {level >= 3 && hasDecor('blue_flag') && (
+           <><FlagDecor x={75} y={15} color="#3b82f6" /><FlagDecor x={225} y={15} color="#3b82f6" /></>
+        )}
+        {level >= 3 && hasDecor('gold_flag') && (
+           <><FlagDecor x={75} y={15} color="#fbbf24" goldStar /><FlagDecor x={225} y={15} color="#fbbf24" goldStar /></>
+        )}
+        {level >= 2 && hasDecor('wall_torch') && (
+          <><PremiumTorch x={110} y={140} /><PremiumTorch x={190} y={140} /></>
+        )}
+        {level >= 2 && hasDecor('blue_torch') && (
+          <><PremiumTorch x={110} y={140} isBlue /><PremiumTorch x={190} y={140} isBlue /></>
+        )}
+        {hasDecor('royal_banner') && (
+          <g transform="translate(150, 75)">
+            <line x1="0" y1="0" x2="0" y2="25" stroke="#92400e" strokeWidth="2" />
+            <path d="M-8 0 H8 V20 L0 15 L-8 20 Z" fill="#7c3aed" filter={u('drop-shadow')} />
+            <path d="M-8 0 H8 V3 Z" fill="#fbbf24" />
+            <circle cx="0" cy="8" r="3" fill="#fbbf24" />
+          </g>
         )}
 
-        {/* Banner */}
-        {hasDecor('royal_banner') && <RoyalBannerDecor />}
-
-        {/* === LAYER 7: WEATHER / EFFECTS (HP Based) === */}
+        {/* LAYER 7: PARTICLE EFFECTS */}
         {isHealthy && showEffects && (
-           <>
-             <path d="M20 50 Q30 40 40 50" fill="none" stroke="white" strokeWidth="2">
-                <animateTransform attributeName="transform" type="translate" from="-50 0" to="350 0" dur="15s" repeatCount="indefinite" />
-             </path>
-             <path d="M20 60 Q30 50 40 60" fill="none" stroke="white" strokeWidth="1.5" opacity="0.6">
-                <animateTransform attributeName="transform" type="translate" from="-50 20" to="350 20" dur="20s" repeatCount="indefinite" />
-             </path>
-           </>
+           <g filter={u('glow-blue')}>
+             {[0, 1, 2, 3, 4].map((i) => {
+                const rCx = (i * 47) % 200;
+                const rR = (i * 17) % 2 + 1;
+                const rDur = 3 + ((i * 23) % 4);
+                return (
+                  <circle key={i} cx={50 + rCx} cy={200} r={rR} fill="#a78bfa" opacity="0">
+                     <animate attributeName="cy" values="200; 50" dur={`${rDur}s`} repeatCount="indefinite" begin={`${i * 1.2}s`} />
+                     <animate attributeName="opacity" values="0; 0.8; 0" dur={`${rDur}s`} repeatCount="indefinite" begin={`${i * 1.2}s`} />
+                  </circle>
+                );
+             })}
+           </g>
         )}
-        
         {isCritical && showEffects && (
-           <>
-             <g stroke="white" strokeWidth="1" opacity="0.4">
-                <line x1="50" y1="0" x2="40" y2="20"><animate attributeName="y1" from="0" to="200" dur="1s" repeatCount="indefinite" /><animate attributeName="y2" from="20" to="220" dur="1s" repeatCount="indefinite" /></line>
-                <line x1="150" y1="0" x2="140" y2="20"><animate attributeName="y1" from="-50" to="150" dur="1s" repeatCount="indefinite" /><animate attributeName="y2" from="-30" to="170" dur="1s" repeatCount="indefinite" /></line>
-                <line x1="250" y1="0" x2="240" y2="20"><animate attributeName="y1" from="-100" to="100" dur="1s" repeatCount="indefinite" /><animate attributeName="y2" from="-80" to="120" dur="1s" repeatCount="indefinite" /></line>
-             </g>
-             <path d="M100 0 L80 50 L120 50 L100 100" stroke="#fef08a" strokeWidth="3" fill="none" opacity="0">
-                <animate attributeName="opacity" values="0;1;0;0;0" dur="3s" repeatCount="indefinite" />
-             </path>
-           </>
+           <g filter={u('glow-orange')}>
+             {[0, 1, 2, 3, 4, 5].map((i) => {
+                const rCx = (i * 61) % 100;
+                const rCx2 = 80 + ((i * 73) % 140);
+                const rR = (i * 19) % 2 + 1;
+                const rDur = 1 + ((i * 31) % 2);
+                return (
+                  <circle key={i} cx={100 + rCx} cy={150} r={rR} fill="#ef4444" opacity="0">
+                     <animate attributeName="cy" values="150; 50" dur={`${rDur}s`} repeatCount="indefinite" begin={`${i * 0.5}s`} />
+                     <animate attributeName="cx" values={`${100 + rCx}; ${rCx2}`} dur={`${rDur}s`} repeatCount="indefinite" begin={`${i * 0.5}s`} />
+                     <animate attributeName="opacity" values="0; 1; 0" dur={`${rDur}s`} repeatCount="indefinite" begin={`${i * 0.5}s`} />
+                  </circle>
+                );
+             })}
+           </g>
         )}
 
       </motion.svg>
-      {/* Level Badge Overlay */}
-      <div className="absolute top-2 right-2 bg-white/20 backdrop-blur-md px-2 py-1 rounded-lg text-xs font-bold text-slate-700 shadow-sm border border-white/50">
-        Lv. {level}
+      {/* Level Badge */}
+      <div className="absolute top-0 right-0 md:top-4 md:right-4 bg-gradient-to-r from-primary to-primary-dark backdrop-blur-md px-3 py-1.5 rounded-xl text-xs font-black text-white shadow-[0_4px_20px_rgba(167,139,250,0.4)] border border-white/20 z-20 flex items-center gap-1">
+        <span className="material-symbols-outlined text-[14px]">star</span>
+        LV. {level}
       </div>
     </div>
   );
