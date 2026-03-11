@@ -4,9 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BottomNav } from '@/components/layout/BottomNav';
-import { useBudgetStore, useTransactionStore, useGameStore } from '@/stores';
+import { useBudgetStore, useTransactionStore, useGameStore, useProStore } from '@/stores';
 import { SyncStatus } from '@/components/ui/SyncStatus';
 import { deleteAllCloudData } from '@/lib/sync';
+import { ProBadge } from '@/components/ui/ProBadge';
+import { UpgradeModal } from '@/components/ui/UpgradeModal';
 
 const AVATAR_OPTIONS = [
   '/avatar.png',
@@ -22,9 +24,11 @@ export default function ProfilePage() {
   const { monthlyBudget, setMonthlyBudget } = useBudgetStore();
   const { transactions } = useTransactionStore();
   const { xp, level, streak, achievements, getLevelName, getLevelProgress, username, avatar, updateProfile } = useGameStore();
+  const { isPro } = useProStore();
   
   const [showBudgetModal, setShowBudgetModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   
   const [newBudget, setNewBudget] = useState(monthlyBudget.toString());
@@ -209,9 +213,19 @@ export default function ProfilePage() {
             </div>
             
             <div className="flex-1">
-              <h2 className="text-xl font-bold text-gray-900 truncate max-w-[160px]">{username || 'Komandan'}</h2>
-              <div className="bg-primary/5 inline-block px-2 py-0.5 rounded-lg border border-primary/10 mb-2">
-                <p className="text-xs font-bold text-primary">{getLevelName()}</p>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-bold text-gray-900 truncate max-w-[140px]">{username || 'Komandan'}</h2>
+                {isPro && <ProBadge size="sm" />}
+              </div>
+              <div className="flex items-center gap-1.5 mb-2">
+                <div className="bg-primary/5 inline-block px-2 py-0.5 rounded-lg border border-primary/10">
+                  <p className="text-xs font-bold text-primary">{getLevelName()}</p>
+                </div>
+                {!isPro && (
+                  <div className="bg-gray-100 inline-block px-2 py-0.5 rounded-lg">
+                    <p className="text-[9px] font-bold text-gray-400 uppercase">Free</p>
+                  </div>
+                )}
               </div>
               
               {/* XP Bar */}
@@ -246,6 +260,47 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* Pro Plan Banner */}
+        {!isPro && (
+          <button 
+            onClick={() => setShowUpgradeModal(true)}
+            className="relative overflow-hidden rounded-[24px] p-5 text-left group active:scale-[0.98] transition-transform"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-amber-400 via-yellow-500 to-orange-500" />
+            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0id2hpdGUiIGZpbGwtb3BhY2l0eT0iMC4xIi8+PC9zdmc+')] opacity-30" />
+            <div className="relative z-10 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                  <span className="material-symbols-outlined text-white text-2xl">workspace_premium</span>
+                </div>
+                <div>
+                  <p className="font-black text-white text-sm">Upgrade ke Pro</p>
+                  <p className="text-white/80 text-xs">Unlock semua fitur • Rp 19.000</p>
+                </div>
+              </div>
+              <span className="material-symbols-outlined text-white/80 group-hover:translate-x-1 transition-transform">arrow_forward</span>
+            </div>
+          </button>
+        )}
+
+        {/* Pro Status Card (if Pro) */}
+        {isPro && (
+          <div className="glass-card rounded-[24px] p-4 border border-amber-200/50 bg-gradient-to-r from-amber-50/80 to-orange-50/80">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center">
+                <span className="material-symbols-outlined text-white text-xl">workspace_premium</span>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="font-bold text-gray-800 text-sm">MyDuit Quest Pro</p>
+                  <ProBadge size="sm" />
+                </div>
+                <p className="text-xs text-gray-400">Semua fitur premium aktif</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Settings Menu */}
         <div className="flex flex-col gap-4">
@@ -540,6 +595,12 @@ export default function ProfilePage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Upgrade Modal */}
+      <UpgradeModal 
+        isOpen={showUpgradeModal} 
+        onClose={() => setShowUpgradeModal(false)} 
+      />
 
       {/* Floating FAB - Adjusted for Desktop */}
       <div className="fixed bottom-[70px] left-0 w-full flex justify-center pointer-events-none z-40 md:bottom-10 md:left-auto md:right-10 md:w-auto md:justify-end">
