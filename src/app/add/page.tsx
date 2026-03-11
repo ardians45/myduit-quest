@@ -4,7 +4,7 @@ import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import imageCompression from 'browser-image-compression';
-import { useTransactionStore, useGameStore } from '@/stores';
+import { useTransactionStore, useGameStore, useProStore } from '@/stores';
 
 const EXPENSE_CATEGORIES = [
   { id: 'food', label: 'Makanan', icon: 'restaurant' },
@@ -28,6 +28,7 @@ function AddTransactionContent() {
   const searchParams = useSearchParams();
   const { addTransaction, transactions } = useTransactionStore();
   const { addXP, updateStreak, unlockAchievement } = useGameStore();
+  const { canScan, incrementScan, getScansRemaining, isPro } = useProStore();
   
   const initialType = (searchParams.get('type') as 'expense' | 'income') || 'expense';
   const [type, setType] = useState<'expense' | 'income'>(initialType);
@@ -79,6 +80,13 @@ function AddTransactionContent() {
     setIsScanning(true);
     setScanError(null);
 
+    // Check scan limit for free users
+    if (!canScan()) {
+      setScanError('Batas scan struk 30x/bulan sudah tercapai. Upgrade ke Pro untuk scan unlimited!');
+      setIsScanning(false);
+      return;
+    }
+
     try {
       // 1. Compress Image
       const options = {
@@ -128,6 +136,9 @@ function AddTransactionContent() {
           if (data.shopName) {
             setNote(`Belanja di ${data.shopName}`);
           }
+          
+          // Increment scan counter for free users
+          incrementScan();
           
           if (data.date) {
             // Force it to today's date no matter what AI returns to prevent stats bugs
@@ -214,11 +225,16 @@ function AddTransactionContent() {
              onChange={handleScanReceipt}
            />
            <label 
-             htmlFor="receipt-upload"
-             className="w-10 h-10 glass-card rounded-xl flex items-center justify-center text-primary hover:text-white hover:bg-primary transition-colors hover:scale-105 shadow-sm cursor-pointer"
-           >
-             <span className="material-symbols-outlined text-lg">document_scanner</span>
-           </label>
+              htmlFor="receipt-upload"
+              className="w-10 h-10 glass-card rounded-xl flex items-center justify-center text-primary hover:text-white hover:bg-primary transition-colors hover:scale-105 shadow-sm cursor-pointer relative"
+            >
+              <span className="material-symbols-outlined text-lg">document_scanner</span>
+              {!isPro && (
+                <span className="absolute -bottom-1 -right-1 text-[8px] font-bold bg-gray-200 text-gray-600 px-1 rounded-full">
+                  {getScansRemaining()}
+                </span>
+              )}
+            </label>
         </div>
       </header>
 

@@ -7,10 +7,17 @@ interface ProState {
   isPro: boolean;
   proSince: string | null;
   mayarTransactionId: string | null;
+  scanCount: number;
+  scanResetMonth: string | null;
   setPro: (transactionId?: string) => void;
   clearPro: () => void;
   checkProStatus: () => Promise<void>;
+  canScan: () => boolean;
+  incrementScan: () => void;
+  getScansRemaining: () => number;
 }
+
+const FREE_SCAN_LIMIT = 30;
 
 export const useProStore = create<ProState>()(
   persist(
@@ -18,6 +25,8 @@ export const useProStore = create<ProState>()(
       isPro: false,
       proSince: null,
       mayarTransactionId: null,
+      scanCount: 0,
+      scanResetMonth: null,
 
       setPro: (transactionId?: string) => {
         set({
@@ -35,18 +44,47 @@ export const useProStore = create<ProState>()(
         });
       },
 
-      /**
-       * Check Pro status from server/Supabase.
-       * Falls back to localStorage if no server check is available.
-       */
       checkProStatus: async () => {
-        // If already Pro in localStorage, trust it for now
-        // A more robust approach would verify with the server
         const { isPro } = get();
         if (isPro) return;
+      },
 
-        // Could add a server endpoint check here in the future
-        // e.g., fetch('/api/payment/status?userId=...')
+      canScan: () => {
+        const { isPro, scanCount, scanResetMonth } = get();
+        if (isPro) return true;
+
+        // Reset counter each month
+        const currentMonth = new Date().toISOString().slice(0, 7);
+        if (scanResetMonth !== currentMonth) {
+          set({ scanCount: 0, scanResetMonth: currentMonth });
+          return true;
+        }
+
+        return scanCount < FREE_SCAN_LIMIT;
+      },
+
+      incrementScan: () => {
+        const { isPro } = get();
+        if (isPro) return; // Pro users don't need tracking
+
+        const currentMonth = new Date().toISOString().slice(0, 7);
+        const { scanResetMonth, scanCount } = get();
+
+        if (scanResetMonth !== currentMonth) {
+          set({ scanCount: 1, scanResetMonth: currentMonth });
+        } else {
+          set({ scanCount: scanCount + 1 });
+        }
+      },
+
+      getScansRemaining: () => {
+        const { isPro, scanCount, scanResetMonth } = get();
+        if (isPro) return Infinity;
+
+        const currentMonth = new Date().toISOString().slice(0, 7);
+        if (scanResetMonth !== currentMonth) return FREE_SCAN_LIMIT;
+
+        return Math.max(0, FREE_SCAN_LIMIT - scanCount);
       },
     }),
     {

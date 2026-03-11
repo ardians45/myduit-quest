@@ -9,7 +9,6 @@ interface UpgradeModalProps {
 }
 
 const FREE_FEATURES = [
-  { icon: 'account_balance_wallet', text: '1 dompet saja', available: true },
   { icon: 'pie_chart', text: 'Maks 3 alokasi anggaran', available: true },
   { icon: 'lock', text: 'Dekorasi terkunci per level', available: true },
   { icon: 'document_scanner', text: 'Scan struk 30x/bulan', available: true },
@@ -17,7 +16,6 @@ const FREE_FEATURES = [
 ];
 
 const PRO_FEATURES = [
-  { icon: 'account_balance_wallet', text: 'Dompet tak terbatas', available: true },
   { icon: 'pie_chart', text: 'Alokasi anggaran unlimited', available: true },
   { icon: 'castle', text: 'Unlock semua dekorasi benteng', available: true },
   { icon: 'document_scanner', text: 'Scan struk unlimited (AI)', available: true },
@@ -144,7 +142,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                       <span className="text-lg text-amber-700/60 font-bold">Rp</span>
                       <span className="text-4xl sm:text-5xl font-black text-gray-900 tracking-tighter">19.000</span>
                     </div>
-                    <p className="text-xs text-gray-500 mt-2 font-medium relative z-10">Sekali bayar, tidak ada biaya bulanan ✨</p>
+                    <p className="text-xs text-gray-500 mt-2 font-medium relative z-10">Sekali bayar, tidak ada biaya bulanan</p>
                   </div>
 
                   {/* Comparison */}

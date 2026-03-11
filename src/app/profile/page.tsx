@@ -10,13 +10,20 @@ import { deleteAllCloudData } from '@/lib/sync';
 import { ProBadge } from '@/components/ui/ProBadge';
 import { UpgradeModal } from '@/components/ui/UpgradeModal';
 
-const AVATAR_OPTIONS = [
+const FREE_AVATAR_OPTIONS = [
   '/avatar.png',
   'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix&backgroundColor=c0aede',
   'https://api.dicebear.com/7.x/adventurer/svg?seed=Aneka&backgroundColor=b6e3f4',
   'https://api.dicebear.com/7.x/adventurer/svg?seed=Mimi&backgroundColor=ffdfbf',
+];
+
+const PRO_AVATAR_OPTIONS = [
   'https://api.dicebear.com/7.x/bottts/svg?seed=Robo&backgroundColor=d1d4f9',
   'https://api.dicebear.com/7.x/avataaars/svg?seed=Leo&backgroundColor=c0aede',
+  'https://api.dicebear.com/7.x/lorelei/svg?seed=Knight&backgroundColor=fde68a',
+  'https://api.dicebear.com/7.x/notionists/svg?seed=Commander&backgroundColor=bbf7d0',
+  'https://api.dicebear.com/7.x/adventurer/svg?seed=Dragon&backgroundColor=fecaca',
+  'https://api.dicebear.com/7.x/adventurer/svg?seed=Phoenix&backgroundColor=fed7aa',
 ];
 
 export default function ProfilePage() {
@@ -383,20 +390,40 @@ export default function ProfilePage() {
               ref={fileInputRef} 
               onChange={handleImport} 
             />
-            <button 
-              onClick={() => handleExport('csv')}
-              className="w-full p-4 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-500 flex items-center justify-center">
-                  <span className="material-symbols-outlined">table_view</span>
+            {/* CSV Export - Pro Only */}
+            {isPro ? (
+              <button 
+                onClick={() => handleExport('csv')}
+                className="w-full p-4 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-500 flex items-center justify-center">
+                    <span className="material-symbols-outlined">table_view</span>
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-gray-800 text-sm">Export Excel (CSV)</p>
+                    <p className="text-[10px] text-amber-600 font-bold">✦ Pro Feature</p>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <p className="font-bold text-gray-800 text-sm">Export Excel (CSV)</p>
+                <span className="material-symbols-outlined text-gray-300">download</span>
+              </button>
+            ) : (
+              <button 
+                onClick={() => setShowUpgradeModal(true)}
+                className="w-full p-4 flex items-center justify-between hover:bg-amber-50/50 transition-colors opacity-70"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gray-100 text-gray-400 flex items-center justify-center">
+                    <span className="material-symbols-outlined">table_view</span>
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-gray-500 text-sm">Export Excel (CSV)</p>
+                    <p className="text-[10px] text-amber-600 font-bold">🔒 Pro Plan</p>
+                  </div>
                 </div>
-              </div>
-              <span className="material-symbols-outlined text-gray-300">download</span>
-            </button>
+                <span className="material-symbols-outlined text-amber-400">workspace_premium</span>
+              </button>
+            )}
           </div>
 
           <button 
@@ -545,7 +572,7 @@ export default function ProfilePage() {
                 <div className="mb-6">
                   <span className="text-xs text-gray-400 font-bold uppercase mb-3 block">Pilih Avatar</span>
                   <div className="grid grid-cols-3 gap-3">
-                    {AVATAR_OPTIONS.map((opt, idx) => (
+                    {FREE_AVATAR_OPTIONS.map((opt, idx) => (
                       <button 
                         key={idx}
                         onClick={() => setNewAvatar(opt)}
@@ -556,6 +583,42 @@ export default function ProfilePage() {
                         <img src={opt} alt={`Avatar ${idx}`} className="w-full h-full object-cover bg-gray-50" />
                       </button>
                     ))}
+                  </div>
+                  {/* Pro Avatars */}
+                  <div className="mt-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xs text-amber-600 font-bold uppercase">Avatar Premium</span>
+                      {!isPro && <span className="text-[9px] bg-amber-100 text-amber-700 font-bold px-2 py-0.5 rounded-full">🔒 Pro</span>}
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      {PRO_AVATAR_OPTIONS.map((opt, idx) => (
+                        isPro ? (
+                          <button 
+                            key={idx}
+                            onClick={() => setNewAvatar(opt)}
+                            className={`aspect-square rounded-2xl border-2 overflow-hidden transition-all relative ${
+                              newAvatar === opt ? 'border-amber-400 shadow-lg scale-105' : 'border-amber-100 opacity-80 hover:opacity-100 hover:scale-105'
+                            }`}
+                          >
+                            <img src={opt} alt={`Pro Avatar ${idx}`} className="w-full h-full object-cover bg-amber-50" />
+                            <div className="absolute top-1 right-1 w-4 h-4 bg-amber-400 rounded-full flex items-center justify-center">
+                              <span className="material-symbols-outlined text-white text-[10px]">star</span>
+                            </div>
+                          </button>
+                        ) : (
+                          <button 
+                            key={idx}
+                            onClick={() => setShowUpgradeModal(true)}
+                            className="aspect-square rounded-2xl border-2 border-gray-100 overflow-hidden relative grayscale opacity-40 cursor-pointer hover:opacity-60 transition-all"
+                          >
+                            <img src={opt} alt={`Pro Avatar ${idx}`} className="w-full h-full object-cover bg-gray-50" />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                              <span className="material-symbols-outlined text-white text-lg">lock</span>
+                            </div>
+                          </button>
+                        )
+                      ))}
+                    </div>
                   </div>
                 </div>
 

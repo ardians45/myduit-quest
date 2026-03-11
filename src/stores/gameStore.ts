@@ -38,8 +38,8 @@ interface GameState {
   addXP: (amount: number) => void;
   updateStreak: () => void;
   unlockAchievement: (achievement: string) => void;
-  toggleDecoration: (decorationId: string) => void;
-  isDecorationUnlocked: (decorationId: string) => boolean;
+  toggleDecoration: (decorationId: string, isPro?: boolean) => void;
+  isDecorationUnlocked: (decorationId: string, isPro?: boolean) => boolean;
   updateProfile: (username: string, avatar: string) => void;
   getLevelProgress: () => { current: number; max: number; percentage: number };
   getLevelName: () => string;
@@ -134,10 +134,12 @@ export const useGameStore = create<GameState>()(
         if (changed) syncGameToCloud();
       },
       
-      toggleDecoration: (decorationId) => {
+      toggleDecoration: (decorationId, isPro) => {
         const { level, activeDecorations } = get();
         const item = DECORATION_CATALOG.find(d => d.id === decorationId);
-        if (!item || level < item.requiredLevel) return; // Can't toggle if locked
+        if (!item) return;
+        // Pro users can toggle any decoration, non-Pro need level
+        if (!isPro && level < item.requiredLevel) return;
         
         if (activeDecorations.includes(decorationId)) {
           // Remove
@@ -149,7 +151,8 @@ export const useGameStore = create<GameState>()(
         syncGameToCloud();
       },
       
-      isDecorationUnlocked: (decorationId) => {
+      isDecorationUnlocked: (decorationId, isPro) => {
+        if (isPro) return true;
         const { level } = get();
         const item = DECORATION_CATALOG.find(d => d.id === decorationId);
         return item ? level >= item.requiredLevel : false;

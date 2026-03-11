@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import { BottomNav } from '@/components/layout/BottomNav';
-import { useBudgetStore, useTransactionStore, useGameStore } from '@/stores';
+import { useBudgetStore, useTransactionStore, useGameStore, useProStore } from '@/stores';
 import { DECORATION_CATALOG } from '@/stores/gameStore';
 
 const Fortress3D = dynamic(
@@ -35,7 +35,7 @@ export default function BattlePage() {
   const { getHP } = useBudgetStore();
   const { getTotalExpenseThisMonth } = useTransactionStore();
   const { xp, level, streak, achievements, activeDecorations, toggleDecoration, isDecorationUnlocked, getLevelProgress, getLevelName } = useGameStore();
-
+  const { isPro } = useProStore();
   const [activeTab, setActiveTab] = useState<'achievements' | 'decorations'>('achievements');
   
   const totalExpense = getTotalExpenseThisMonth();
@@ -182,7 +182,7 @@ export default function BattlePage() {
               {/* Decoration Grid */}
               <div className="grid grid-cols-2 gap-3">
                 {DECORATION_CATALOG.map((item, index) => {
-                  const unlocked = isDecorationUnlocked(item.id);
+                  const unlocked = isDecorationUnlocked(item.id, isPro);
                   const isActive = activeDecorations.includes(item.id);
                   const typeColor = TYPE_COLORS[item.type] || TYPE_COLORS.flag;
 
@@ -192,7 +192,7 @@ export default function BattlePage() {
                       initial={{ y: 20, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: index * 0.07 }}
-                      onClick={() => unlocked && toggleDecoration(item.id)}
+                      onClick={() => unlocked && toggleDecoration(item.id, isPro)}
                       disabled={!unlocked}
                       className={`relative p-4 rounded-2xl flex flex-col items-center gap-2 text-center transition-all active:scale-95 ${
                         !unlocked
@@ -214,6 +214,12 @@ export default function BattlePage() {
                         <div className="absolute top-2 right-2 flex items-center gap-1 bg-gray-200/80 px-1.5 py-0.5 rounded-md">
                           <span className="material-symbols-outlined text-[10px] text-gray-500">lock</span>
                           <span className="text-[9px] font-bold text-gray-500">Lv.{item.requiredLevel}</span>
+                        </div>
+                      )}
+                      {unlocked && isPro && level < item.requiredLevel && (
+                        <div className="absolute top-2 right-2 flex items-center gap-1 bg-amber-100 px-1.5 py-0.5 rounded-md">
+                          <span className="material-symbols-outlined text-[10px] text-amber-600">workspace_premium</span>
+                          <span className="text-[9px] font-bold text-amber-600">PRO</span>
                         </div>
                       )}
 
