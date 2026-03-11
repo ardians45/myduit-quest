@@ -22,7 +22,6 @@ export default function UpgradeSuccessPage() {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          router.push('/profile');
           return 0;
         }
         return prev - 1;
@@ -30,7 +29,13 @@ export default function UpgradeSuccessPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [router]);
+  }, []);
+
+  useEffect(() => {
+    if (countdown === 0) {
+      router.push('/profile');
+    }
+  }, [countdown, router]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-orange-50 font-display flex items-center justify-center p-6">
