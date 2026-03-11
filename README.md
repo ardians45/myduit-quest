@@ -1,6 +1,6 @@
 <div align="center">
   <!-- BANNER -->
-  ![MyDuit Quest Banner](public/banner.png)
+  <img src="public/banner.png" alt="MyDuit Quest Banner" width="100%" style="border-radius: 12px; margin-bottom: 20px;" />
   
   <h1>🛡️ MyDuit Quest ⚔️</h1>
   <p><b>Aplikasi Pencatat Keuangan Gamifikasi Paling Mutakhir dengan Kecerdasan Buatan (AI)</b></p>
