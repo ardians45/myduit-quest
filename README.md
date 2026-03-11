@@ -156,6 +156,8 @@ Siap melindungi finansialmu sebagai Developer? Gas compile source kodenya!
 
    # Payment Gateway (Optional - for Pro feature local testing)
    MAYAR_API_KEY=your_mayar_key
+   MAYAR_BASE_URL=https://api.mayar.club/v1
+   MAYAR_WEBHOOK_SECRET=your_mayar_webhook_secret
    ```
 
 4. **Jalankan Quest!**
