@@ -9,14 +9,12 @@ interface UpgradeModalProps {
 }
 
 const FREE_FEATURES = [
-  { icon: 'pie_chart', text: 'Maks 3 alokasi anggaran', available: true },
   { icon: 'lock', text: 'Dekorasi terkunci per level', available: true },
   { icon: 'document_scanner', text: 'Scan struk 30x/bulan', available: true },
   { icon: 'palette', text: 'Avatar standar', available: true },
 ];
 
 const PRO_FEATURES = [
-  { icon: 'pie_chart', text: 'Alokasi anggaran unlimited', available: true },
   { icon: 'castle', text: 'Unlock semua dekorasi benteng', available: true },
   { icon: 'document_scanner', text: 'Scan struk unlimited (AI)', available: true },
   { icon: 'palette', text: 'Avatar & tema premium', available: true },

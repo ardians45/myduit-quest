@@ -428,36 +428,14 @@ export default function StatsPage() {
                 ))}
 
                 {/* Custom Strategy Option */}
-                {!isCustomizing && !showUpgradePrompt ? (
+                {!isCustomizing ? (
                   <button 
-                    onClick={() => {
-                      if (!isPro) {
-                        setShowUpgradePrompt(true);
-                      } else {
-                        setIsCustomizing(true);
-                      }
-                    }}
+                    onClick={() => setIsCustomizing(true)}
                     className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed border-gray-200 text-gray-500 hover:border-primary hover:text-primary transition-all group"
                   >
                     <span className="material-symbols-outlined mb-1 group-hover:scale-110 transition-transform">tune</span>
                     <span className="text-xs font-bold">Kustom Strategi Sendiri</span>
-                    {!isPro && <span className="text-[9px] bg-amber-100 text-amber-700 font-bold px-2 py-0.5 rounded-full mt-1">🔒 Pro Only</span>}
                   </button>
-                ) : showUpgradePrompt ? (
-                  <div className="p-4 rounded-xl border-2 border-amber-200 bg-amber-50 flex flex-col items-center gap-2 text-center">
-                    <span className="material-symbols-outlined text-amber-500 text-3xl">workspace_premium</span>
-                    <p className="text-sm font-bold text-gray-800">Kustom Alokasi = Pro Feature</p>
-                    <p className="text-xs text-gray-500">Upgrade ke Pro untuk membuat strategi alokasi sendiri dengan persentase bebas.</p>
-                    <button
-                      onClick={() => router.push('/profile')}
-                      className="mt-1 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-bold shadow-md"
-                    >
-                      Upgrade ke Pro
-                    </button>
-                    <button onClick={() => setShowUpgradePrompt(false)} className="text-[10px] text-gray-400 hover:text-gray-600">
-                      Batal
-                    </button>
-                  </div>
                 ) : (
                   <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 flex flex-col gap-4">
                     <div className="flex justify-between items-center mb-2">
