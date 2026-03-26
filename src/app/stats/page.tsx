@@ -412,7 +412,7 @@ export default function StatsPage() {
                   <button 
                     key={tmpl.id}
                     onClick={() => setAllocations(tmpl.allocations)}
-                    className="flex flex-col text-left p-4 rounded-xl border border-gray-100 bg-white shadow-sm hover:border-primary/50 hover:shadow-md transition-all group"
+                    className="flex flex-col text-left p-4 rounded-lg border border-gray-100 bg-white shadow-sm hover:border-primary/50 hover:shadow-md transition-all group"
                   >
                     <div className="flex justify-between items-center mb-1">
                        <span className="text-sm font-bold text-gray-800 group-hover:text-primary transition-colors">{tmpl.title}</span>
@@ -431,7 +431,7 @@ export default function StatsPage() {
                 {!isCustomizing ? (
                   <button 
                     onClick={() => setIsCustomizing(true)}
-                    className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed border-gray-200 text-gray-500 hover:border-primary hover:text-primary transition-all group"
+                    className="flex flex-col items-center justify-center p-4 rounded-lg border-2 border-dashed border-gray-200 text-gray-500 hover:border-primary hover:text-primary transition-all group"
                   >
                     <span className="material-symbols-outlined mb-1 group-hover:scale-110 transition-transform">tune</span>
                     <span className="text-xs font-bold">Kustom Strategi Sendiri</span>

@@ -203,9 +203,6 @@ export default function DashboardPage() {
               </span>
             </div>
           </div>
-          <button className="cursor-pointer flex items-center gap-2 px-3 py-1.5 glass-card hover:bg-white rounded-full transition-all active:scale-95 shadow-sm group">
-            <span className="material-symbols-outlined text-[18px] text-gray-600 group-hover:rotate-180 transition-transform duration-500">sync</span>
-          </button>
         </header>
 
         {/* Main Content Grid */}
@@ -217,9 +214,17 @@ export default function DashboardPage() {
             {/* Top Right Floating Card */}
             <div className="absolute top-0 right-4 z-30 flex flex-col items-end md:right-10 md:top-10">
               <div className="animate-float-delayed relative">
-                <div className="glass-card text-gray-800 text-[10px] font-bold py-1.5 px-3 rounded-xl rounded-br-none shadow-lg mb-1 mr-8 whitespace-nowrap animate-bounce">
-                  Pertahanan stabil!
-                </div>
+                 <div className={`text-[10px] font-bold py-1.5 px-3 rounded-xl rounded-br-none shadow-lg mb-1 mr-8 whitespace-nowrap animate-bounce ${
+                   hp <= 0
+                     ? 'bg-red-600 text-white border border-red-700 animate-pulse'
+                     : hp > 70
+                     ? 'glass-card text-gray-800'
+                     : hp > 40
+                     ? 'bg-amber-100 text-amber-700 border border-amber-200'
+                     : 'bg-red-100 text-red-700 border border-red-200 animate-pulse'
+                 }`}>
+                   {hp <= 0 ? 'Benteng telah runtuh!' : hp > 70 ? 'Pertahanan stabil!' : hp > 40 ? 'Waspada! Kurangi jajan!' : 'KRITIS! Benteng hampir runtuh!'}
+                 </div>
                 <div 
                   className="w-14 h-14 rounded-xl border-2 border-white shadow-xl overflow-hidden bg-purple-50 relative group cursor-pointer transform rotate-3 hover:rotate-0 transition-all"
                   onClick={() => router.push('/profile')}

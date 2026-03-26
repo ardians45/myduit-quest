@@ -99,17 +99,17 @@ export default function BattlePage() {
         {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-3">
           <div className="glass-card p-3 rounded-2xl flex flex-col items-center justify-center gap-1 shadow-sm">
-            <span className="material-symbols-outlined text-success text-2xl">favorite</span>
+            <span className="material-symbols-outlined text-emerald-400 text-2xl drop-shadow-sm">favorite</span>
             <span className="text-lg font-black text-gray-800">{hp}%</span>
             <span className="text-[10px] text-gray-400 font-bold uppercase">Health</span>
           </div>
           <div className="glass-card p-3 rounded-2xl flex flex-col items-center justify-center gap-1 shadow-sm">
-            <span className="material-symbols-outlined text-warning text-2xl">local_fire_department</span>
+            <span className="material-symbols-outlined text-orange-400 text-2xl drop-shadow-sm">local_fire_department</span>
             <span className="text-lg font-black text-gray-800">{streak}</span>
             <span className="text-[10px] text-gray-400 font-bold uppercase">Streak</span>
           </div>
           <div className="glass-card p-3 rounded-2xl flex flex-col items-center justify-center gap-1 shadow-sm">
-            <span className="material-symbols-outlined text-primary text-2xl">hotel_class</span>
+            <span className="material-symbols-outlined text-purple-500 text-2xl drop-shadow-sm">hotel_class</span>
             <span className="text-lg font-black text-gray-800">{xp}</span>
             <span className="text-[10px] text-gray-400 font-bold uppercase">Total XP</span>
           </div>

@@ -54,22 +54,10 @@ body {
 }
 
 /* ===== MATERIAL SYMBOLS ===== */
-/* Prevent icons from rendering as text while the font loads */
 .material-symbols-outlined {
   font-family: 'Material Symbols Outlined';
-  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-  font-display: block; /* hide, don't swap to fallback text */
-  /* Hide the ligature text until the icon font is ready */
-  color: transparent;
-  /* Fallback: once font is loaded the real color is inherited */
-  transition: color 0.15s ease;
-}
-
-/* Once the font face is available, icons inherit their assigned color */
-@supports (font-variation-settings: 'FILL' 0) {
-  .material-symbols-outlined {
-    color: inherit;
-  }
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-display: block;
 }
 
 /* ===== GLASSMORPHISM & UTILITIES ===== */
