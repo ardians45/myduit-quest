@@ -1,17 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { friendlyError } from "@/lib/errors";
 import { rupiah } from "@/lib/format";
 import { useGame } from "@/components/game/GameFeedback";
-import { Can } from "@/components/layout/SessionProvider";
+import { Can, useCan } from "@/components/layout/SessionProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
-import { ColorPicker, EmojiPicker, Field, Input, Select } from "@/components/ui/Form";
+import { ColorPicker, Field, IconPicker, Input, Select } from "@/components/ui/Form";
+import { RowMenu } from "@/components/ui/RowMenu";
+import { Chest } from "@/components/art";
+import { PICKER_SETS } from "@/lib/icons";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
-import { EmptyState, StatTile } from "@/components/ui/Misc";
+import { EmptyState, IconTile } from "@/components/ui/Misc";
 import type { WalletBalance } from "@/lib/types";
 
 const TYPES = [
@@ -29,13 +33,16 @@ interface Form {
   color: string;
   initial_balance: string;
 }
-const EMPTY: Form = { name: "", type: "cash", icon: "👛", color: "#fbbf24", initial_balance: "0" };
+const EMPTY: Form = { name: "", type: "cash", icon: "wallet", color: "#f5b83d", initial_balance: "0" };
 
 export function WalletsManager({ wallets, userId }: { wallets: WalletBalance[]; userId: string }) {
   const { reward, toast, refresh } = useGame();
   const [form, setForm] = useState<Form | null>(null);
   const [del, setDel] = useState<WalletBalance | null>(null);
   const [busy, setBusy] = useState(false);
+  const canUpdate = useCan("wallets.update");
+  const canDelete = useCan("wallets.delete");
+  const can = (p: string) => (p === "wallets.update" ? canUpdate : canDelete);
   const total = wallets.reduce((s, w) => s + Number(w.balance), 0);
 
   async function save() {
@@ -75,60 +82,66 @@ export function WalletsManager({ wallets, userId }: { wallets: WalletBalance[]; 
 
   return (
     <>
-      <div className="mb-4 grid grid-cols-2 gap-3">
-        <StatTile label="Total saldo">
-          <AnimatedNumber value={total} money />
-        </StatTile>
-        <div className="flex items-center justify-end">
-          <Can perm="wallets.create">
-            <Button onClick={() => setForm({ ...EMPTY })}>+ Dompet Baru</Button>
-          </Can>
+      <Card hero className="mb-5 flex items-center gap-4">
+        <Chest size={64} />
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-mute">Total saldo {wallets.length} dompet</p>
+          <p className="truncate font-display text-3xl font-bold text-gold">
+            <AnimatedNumber value={total} money />
+          </p>
         </div>
-      </div>
+        <Can perm="wallets.create">
+          <Button onClick={() => setForm({ ...EMPTY })} className="hidden sm:inline-flex">
+            <Plus size={16} /> Dompet Baru
+          </Button>
+        </Can>
+      </Card>
+      <Can perm="wallets.create">
+        <Button onClick={() => setForm({ ...EMPTY })} className="mb-5 w-full sm:hidden">
+          <Plus size={16} /> Dompet Baru
+        </Button>
+      </Can>
 
       {wallets.length === 0 ? (
         <EmptyState
-          emoji="👛"
+          icon="wallet"
           title="Inventory masih kosong"
           text="Buat dompet pertamamu (tunai, rekening, atau e-wallet) untuk mulai mencatat. Punya 3 dompet membuka achievement Kolektor!"
           action={
             <Can perm="wallets.create">
-              <Button onClick={() => setForm({ ...EMPTY })}>Buat Dompet</Button>
+              <Button onClick={() => setForm({ ...EMPTY })}>
+                <Plus size={16} /> Buat Dompet
+              </Button>
             </Can>
           }
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {wallets.map((w) => (
-            <Card key={w.id}>
-              <div className="flex items-start gap-3">
-                <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border-[3px] text-3xl" style={{ borderColor: w.color, background: w.color + "22" }}>
-                  {w.icon}
-                </span>
+            <Card key={w.id} lift>
+              <div className="flex items-center gap-3">
+                <IconTile icon={w.icon} color={w.color} size={44} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-display text-xl">{w.name}</p>
-                  <p className="text-xs font-bold uppercase tracking-wide text-mute">{TYPES.find((t) => t.value === w.type)?.label}</p>
+                  <p className="truncate font-display text-base font-bold">{w.name}</p>
+                  <p className="text-xs text-mute">{TYPES.find((t) => t.value === w.type)?.label}</p>
                 </div>
+                <RowMenu
+                  label={`Aksi ${w.name}`}
+                  items={[
+                    ...(can("wallets.update")
+                      ? [{ label: "Ubah", icon: <Pencil size={16} />, onClick: () => setForm({ id: w.id, name: w.name, type: w.type, icon: w.icon, color: w.color, initial_balance: String(w.initial_balance) }) }]
+                      : []),
+                    ...(can("wallets.delete") ? [{ label: "Hapus", icon: <Trash2 size={16} />, danger: true, onClick: () => setDel(w) }] : []),
+                  ]}
+                />
               </div>
-              <p className={`mt-3 font-display text-3xl ${Number(w.balance) < 0 ? "text-rubi" : "text-gold"}`}>
+              <p className={`mt-4 font-display text-2xl font-bold ${Number(w.balance) < 0 ? "text-rose" : "text-white"}`}>
                 <AnimatedNumber value={Number(w.balance)} money />
               </p>
-              <p className="text-xs text-mute">
-                Awal {rupiah(w.initial_balance)} · masuk <span className="text-zamrud">{rupiah(w.total_income)}</span> · keluar{" "}
-                <span className="text-rubi">{rupiah(w.total_expense)}</span>
+              <p className="mt-1 text-xs text-mute">
+                Awal {rupiah(w.initial_balance)} · masuk <span className="text-emerald">{rupiah(w.total_income)}</span> · keluar{" "}
+                <span className="text-rose">{rupiah(w.total_expense)}</span>
               </p>
-              <div className="mt-3 flex gap-2">
-                <Can perm="wallets.update">
-                  <Button small variant="blue" onClick={() => setForm({ id: w.id, name: w.name, type: w.type, icon: w.icon, color: w.color, initial_balance: String(w.initial_balance) })}>
-                    Ubah
-                  </Button>
-                </Can>
-                <Can perm="wallets.delete">
-                  <Button small variant="red" onClick={() => setDel(w)}>
-                    Hapus
-                  </Button>
-                </Can>
-              </div>
             </Card>
           ))}
         </div>
@@ -140,7 +153,7 @@ export function WalletsManager({ wallets, userId }: { wallets: WalletBalance[]; 
         title={form?.id ? "Ubah Dompet" : "Dompet Baru"}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setForm(null)}>
+            <Button variant="secondary" onClick={() => setForm(null)}>
               Batal
             </Button>
             <Button loading={busy} onClick={save}>
@@ -166,7 +179,7 @@ export function WalletsManager({ wallets, userId }: { wallets: WalletBalance[]; 
             <Field label="Saldo awal (Rp)" hint="Saldo sekarang = saldo awal + pemasukan - pengeluaran.">
               <Input type="number" inputMode="numeric" step="1" value={form.initial_balance} onChange={(e) => setForm({ ...form, initial_balance: e.target.value })} />
             </Field>
-            <EmojiPicker value={form.icon} onChange={(icon) => setForm({ ...form, icon })} options={["👛", "🏦", "📱", "💳", "🐷", "🎒", "💰", "🪙"]} />
+            <IconPicker value={form.icon} onChange={(icon) => setForm({ ...form, icon })} groups={PICKER_SETS.wallet} />
             <ColorPicker value={form.color} onChange={(color) => setForm({ ...form, color })} />
             <button type="submit" className="hidden" />
           </form>

@@ -5,10 +5,14 @@ import { createClient } from "@/lib/supabase/client";
 import { friendlyError } from "@/lib/errors";
 import { fmtDate, rupiah, todayWIB } from "@/lib/format";
 import { useGame } from "@/components/game/GameFeedback";
-import { Can } from "@/components/layout/SessionProvider";
+import { Can, useCan } from "@/components/layout/SessionProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { EmojiPicker, Field, Input } from "@/components/ui/Form";
+import { IconPicker, Field, Input } from "@/components/ui/Form";
+import { RowMenu } from "@/components/ui/RowMenu";
+import { BossSigil } from "@/components/art";
+import { PICKER_SETS } from "@/lib/icons";
+import { History, Pencil, Plus, Swords, Trash2 } from "lucide-react";
 import { HpBar } from "@/components/ui/HPBar";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
 import { Badge, EmptyState, SectionTitle } from "@/components/ui/Misc";
@@ -26,6 +30,8 @@ export function GoalsManager({ goals, deposits, userId }: { goals: GoalProgress[
   const [open, setOpen] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const canUpdate = useCan("goals.update");
+  const canDelete = useCan("goals.delete");
   const active = goals.filter((g) => g.status === "active");
   const done = goals.filter((g) => g.status === "completed");
 
@@ -107,14 +113,22 @@ export function GoalsManager({ goals, deposits, userId }: { goals: GoalProgress[
     const list = deposits.filter((d) => d.goal_id === g.id);
     const completed = g.status === "completed";
     return (
-      <Card key={g.id} gold={completed}>
+      <Card key={g.id} hero={completed}>
         <div className="flex items-start gap-3">
-          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border-[3px] border-night-500 bg-black/25 text-3xl">{completed ? "🏆" : g.icon}</span>
+          <BossSigil pct={100 - pct} defeated={completed} size={68} />
           <div className="min-w-0 flex-1">
-            <p className="truncate font-display text-xl">{g.name}</p>
-            <div className="mt-0.5 flex flex-wrap gap-2">
-              {completed ? <Badge color="#34d399">Boss kalah</Badge> : <Badge color="#f43f5e">Boss HP {Math.round(100 - pct)}%</Badge>}
-              {g.deadline && <Badge color="#38bdf8">Tenggat {fmtDate(g.deadline)}</Badge>}
+            <div className="flex items-start justify-between gap-1">
+              <p className="truncate font-display text-lg font-bold">{g.name}</p>
+              <RowMenu
+                items={[
+                  ...(canUpdate ? [{ label: "Ubah", icon: <Pencil size={15} />, onClick: () => setForm({ id: g.id, name: g.name, icon: g.icon, target_amount: String(g.target_amount), deadline: g.deadline ?? "" }) }] : []),
+                  ...(canDelete ? [{ label: "Hapus", icon: <Trash2 size={15} />, danger: true, onClick: () => setDelGoal(g) }] : []),
+                ]}
+              />
+            </div>
+            <div className="mt-0.5 flex flex-wrap gap-1.5">
+              {completed ? <Badge color="#34d399">Boss kalah</Badge> : <Badge color="#fb7185">Boss HP {Math.round(100 - pct)}%</Badge>}
+              {g.deadline && <Badge color="#22d3ee">Tenggat {fmtDate(g.deadline)}</Badge>}
             </div>
           </div>
         </div>
@@ -128,27 +142,17 @@ export function GoalsManager({ goals, deposits, userId }: { goals: GoalProgress[
         <div className="mt-3 flex flex-wrap gap-2">
           {!completed && (
             <Can perm="goals.create">
-              <Button small variant="green" onClick={() => setDep({ goal: g, amount: "", note: "", deposited_on: todayWIB() })}>
-                Setor (+15 XP)
+              <Button small variant="success" onClick={() => setDep({ goal: g, amount: "", note: "", deposited_on: todayWIB() })}>
+                <Swords size={15} /> Setor (+15 XP)
               </Button>
             </Can>
           )}
-          <Can perm="goals.update">
-            <Button small variant="blue" onClick={() => setForm({ id: g.id, name: g.name, icon: g.icon, target_amount: String(g.target_amount), deadline: g.deadline ?? "" })}>
-              Ubah
-            </Button>
-          </Can>
-          <Can perm="goals.delete">
-            <Button small variant="red" onClick={() => setDelGoal(g)}>
-              Hapus
-            </Button>
-          </Can>
-          <Button small variant="ghost" onClick={() => setOpen(open === g.id ? null : g.id)} aria-expanded={open === g.id}>
-            Riwayat ({list.length})
+          <Button small variant="secondary" onClick={() => setOpen(open === g.id ? null : g.id)} aria-expanded={open === g.id}>
+            <History size={15} /> Riwayat ({list.length})
           </Button>
         </div>
         {open === g.id && (
-          <ul className="mt-3 divide-y divide-white/10 rounded-xl bg-black/20 px-3 text-sm">
+          <ul className="mt-3 divide-y divide-white/10 rounded-xl bg-white/[0.04] px-3 text-sm">
             {list.length === 0 && <li className="py-2 text-mute">Belum ada setoran.</li>}
             {list.map((d) => (
               <li key={d.id} className="flex items-center justify-between gap-2 py-2">
@@ -156,10 +160,10 @@ export function GoalsManager({ goals, deposits, userId }: { goals: GoalProgress[
                   {fmtDate(d.deposited_on)} {d.note && <span className="text-mute">· {d.note}</span>}
                 </span>
                 <span className="flex items-center gap-3">
-                  <b className="text-zamrud">+{rupiah(d.amount)}</b>
+                  <b className="text-emerald">+{rupiah(d.amount)}</b>
                   <Can perm="goals.delete">
-                    <button className="text-xs font-extrabold text-rubi hover:underline" onClick={() => setDelDep(d)}>
-                      Hapus
+                    <button aria-label="Hapus setoran" className="grid h-7 w-7 place-items-center rounded-lg text-rose hover:bg-white/10" onClick={() => setDelDep(d)}>
+                      <Trash2 size={14} />
                     </button>
                   </Can>
                 </span>
@@ -175,21 +179,21 @@ export function GoalsManager({ goals, deposits, userId }: { goals: GoalProgress[
     <>
       <Can perm="goals.create">
         <div className="mb-4">
-          <Button onClick={() => setForm({ name: "", icon: "🐉", target_amount: "", deadline: "" })}>+ Quest Baru</Button>
+          <Button onClick={() => setForm({ name: "", icon: "skull", target_amount: "", deadline: "" })}><Plus size={16} /> Tambah Quest</Button>
         </div>
       </Can>
 
-      {goals.length === 0 && <EmptyState emoji="🐉" title="Belum ada boss" text="Buat quest tabungan (mis. Laptop Baru), lalu setor sedikit demi sedikit sampai boss tumbang." />}
+      {goals.length === 0 && <EmptyState art="quest" title="Belum ada boss" text="Buat quest tabungan (mis. Laptop Baru), lalu setor sedikit demi sedikit sampai boss tumbang." />}
 
       {active.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
           {active.map(renderGoal)}
         </div>
       )}
       {done.length > 0 && (
         <>
           <SectionTitle>Boss yang Sudah Dikalahkan</SectionTitle>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             {done.map(renderGoal)}
           </div>
         </>
@@ -201,7 +205,7 @@ export function GoalsManager({ goals, deposits, userId }: { goals: GoalProgress[
         title={form?.id ? "Ubah Quest" : "Quest Baru"}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setForm(null)}>
+            <Button variant="secondary" onClick={() => setForm(null)}>
               Batal
             </Button>
             <Button loading={busy} onClick={saveGoal}>
@@ -221,7 +225,7 @@ export function GoalsManager({ goals, deposits, userId }: { goals: GoalProgress[
             <Field label="Tenggat (opsional)">
               <Input type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} />
             </Field>
-            <EmojiPicker value={form.icon} onChange={(icon) => setForm({ ...form, icon })} options={["🐉", "💻", "🏝️", "🎧", "🏠", "🚗", "📱", "🎓", "🎁", "🐷"]} />
+            <IconPicker value={form.icon} onChange={(icon) => setForm({ ...form, icon })} groups={PICKER_SETS.goal} />
             <button type="submit" className="hidden" />
           </form>
         )}
@@ -233,10 +237,10 @@ export function GoalsManager({ goals, deposits, userId }: { goals: GoalProgress[
         title={`Serang ${dep?.goal.name ?? "boss"}`}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setDep(null)}>
+            <Button variant="secondary" onClick={() => setDep(null)}>
               Batal
             </Button>
-            <Button variant="green" loading={busy} onClick={deposit}>
+            <Button variant="success" loading={busy} onClick={deposit}>
               Setor Dana
             </Button>
           </>

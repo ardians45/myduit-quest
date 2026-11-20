@@ -77,35 +77,35 @@ on conflict do nothing;
 -- Kategori global
 -- ---------------------------------------------------------------------
 insert into public.categories (user_id, name, icon, color, kind) values
-  (null, 'Makanan & Minuman', '🍜', '#f97316', 'expense'),
-  (null, 'Transportasi',      '🚌', '#38bdf8', 'expense'),
-  (null, 'Belanja',           '🛍️', '#e879f9', 'expense'),
-  (null, 'Tagihan',           '🧾', '#facc15', 'expense'),
-  (null, 'Hiburan',           '🎮', '#a78bfa', 'expense'),
-  (null, 'Kesehatan',         '💊', '#fb7185', 'expense'),
-  (null, 'Pendidikan',        '📚', '#34d399', 'expense'),
-  (null, 'Lainnya',           '📦', '#94a3b8', 'expense'),
-  (null, 'Gaji',              '💼', '#10b981', 'income'),
-  (null, 'Uang Saku',         '🎒', '#22d3ee', 'income'),
-  (null, 'Bonus',             '🎁', '#fbbf24', 'income'),
-  (null, 'Usaha Sampingan',   '🛠️', '#84cc16', 'income'),
-  (null, 'Pemasukan Lainnya', '💰', '#94a3b8', 'income')
+  (null, 'Makanan & Minuman', 'utensils', '#f97316', 'expense'),
+  (null, 'Transportasi',      'bus', '#38bdf8', 'expense'),
+  (null, 'Belanja',           'shopping-bag', '#e879f9', 'expense'),
+  (null, 'Tagihan',           'receipt', '#facc15', 'expense'),
+  (null, 'Hiburan',           'gamepad', '#a78bfa', 'expense'),
+  (null, 'Kesehatan',         'pill', '#fb7185', 'expense'),
+  (null, 'Pendidikan',        'book-open', '#34d399', 'expense'),
+  (null, 'Lainnya',           'package', '#94a3b8', 'expense'),
+  (null, 'Gaji',              'briefcase', '#10b981', 'income'),
+  (null, 'Uang Saku',         'backpack', '#22d3ee', 'income'),
+  (null, 'Bonus',             'gift', '#fbbf24', 'income'),
+  (null, 'Usaha Sampingan',   'wrench', '#84cc16', 'income'),
+  (null, 'Pemasukan Lainnya', 'banknote', '#94a3b8', 'income')
 on conflict do nothing;
 
 -- ---------------------------------------------------------------------
 -- Achievement
 -- ---------------------------------------------------------------------
 insert into public.achievements (code, name, description, icon, condition_type, threshold, xp_reward) values
-  ('first_step',   'Langkah Pertama',  'Catat transaksi pertamamu.',                     '👣', 'tx_count',          1,   25),
-  ('tx_25',        'Pencatat Rajin',   'Catat 25 transaksi.',                            '📒', 'tx_count',          25,  50),
-  ('tx_100',       'Juru Catat Legendaris', 'Catat 100 transaksi.',                      '📜', 'tx_count',          100, 150),
-  ('streak_7',     'Streak 7 Hari',    'Mencatat keuangan 7 hari berturut-turut.',       '🔥', 'streak',            7,   75),
-  ('streak_30',    'Streak 30 Hari',   'Mencatat keuangan 30 hari berturut-turut.',      '☄️', 'streak',            30,  200),
-  ('budget_guard', 'Penjaga Anggaran', 'Selesaikan satu bulan tanpa melewati anggaran.', '🛡️', 'budget_guard',      1,   60),
-  ('boss_slayer',  'Pembunuh Boss',    'Kalahkan boss pertamamu (quest tabungan selesai).', '🐉', 'goals_completed',  1,   100),
-  ('collector',    'Kolektor',         'Punya 3 dompet.',                                '🎒', 'wallet_count',      3,   40),
-  ('level_5',      'Naik Kelas',       'Capai level 5.',                                 '🏆', 'level',             5,   100),
-  ('challenger',   'Penantang',        'Klaim 5 tantangan harian.',                      '🎯', 'challenge_claims',  5,   60)
+  ('first_step',   'Langkah Pertama',  'Catat transaksi pertamamu.',                     'footprints', 'tx_count',          1,   25),
+  ('tx_25',        'Pencatat Rajin',   'Catat 25 transaksi.',                            'notebook', 'tx_count',          25,  50),
+  ('tx_100',       'Juru Catat Legendaris', 'Catat 100 transaksi.',                      'scroll-text', 'tx_count',          100, 150),
+  ('streak_7',     'Streak 7 Hari',    'Mencatat keuangan 7 hari berturut-turut.',       'flame', 'streak',            7,   75),
+  ('streak_30',    'Streak 30 Hari',   'Mencatat keuangan 30 hari berturut-turut.',      'zap', 'streak',            30,  200),
+  ('budget_guard', 'Penjaga Anggaran', 'Selesaikan satu bulan tanpa melewati anggaran.', 'shield-check', 'budget_guard',      1,   60),
+  ('boss_slayer',  'Pembunuh Boss',    'Kalahkan boss pertamamu (quest tabungan selesai).', 'skull', 'goals_completed',  1,   100),
+  ('collector',    'Kolektor',         'Punya 3 dompet.',                                'backpack', 'wallet_count',      3,   40),
+  ('level_5',      'Naik Kelas',       'Capai level 5.',                                 'trophy', 'level',             5,   100),
+  ('challenger',   'Penantang',        'Klaim 5 tantangan harian.',                      'target', 'challenge_claims',  5,   60)
 on conflict (code) do nothing;
 
 -- ---------------------------------------------------------------------
@@ -120,9 +120,9 @@ declare
 begin
   for u in
     select * from (values
-      ('a0000000-0000-4000-8000-000000000001'::uuid, 'admin@myduitgweh.app',  'Game Master',     '🧙'),
-      ('a0000000-0000-4000-8000-000000000002'::uuid, 'mentor@myduitgweh.app', 'Mentor Keuangan', '🦉'),
-      ('a0000000-0000-4000-8000-000000000003'::uuid, 'pemain@myduitgweh.app', 'Hero Demo',       '🦊')
+      ('a0000000-0000-4000-8000-000000000001'::uuid, 'admin@myduitgweh.app',  'Game Master',     'mage'),
+      ('a0000000-0000-4000-8000-000000000002'::uuid, 'mentor@myduitgweh.app', 'Mentor Keuangan', 'owl'),
+      ('a0000000-0000-4000-8000-000000000003'::uuid, 'pemain@myduitgweh.app', 'Hero Demo',       'fox')
     ) as v(id, email, display_name, avatar)
   loop
     if not exists (select 1 from auth.users where id = u.id or email = u.email) then
@@ -166,17 +166,17 @@ end $$;
 -- Role & nama untuk akun demo (update setelah trigger membuat profil)
 update public.profiles set
   role_id = (select id from public.roles where code = 'admin'),
-  display_name = 'Game Master', avatar = '🧙'
+  display_name = 'Game Master', avatar = 'mage'
 where id = 'a0000000-0000-4000-8000-000000000001';
 
 update public.profiles set
   role_id = (select id from public.roles where code = 'mentor'),
-  display_name = 'Mentor Keuangan', avatar = '🦉'
+  display_name = 'Mentor Keuangan', avatar = 'owl'
 where id = 'a0000000-0000-4000-8000-000000000002';
 
 update public.profiles set
   role_id = (select id from public.roles where code = 'pemain'),
-  display_name = 'Hero Demo', avatar = '🦊'
+  display_name = 'Hero Demo', avatar = 'fox'
 where id = 'a0000000-0000-4000-8000-000000000003';
 
 -- ---------------------------------------------------------------------
@@ -185,11 +185,11 @@ where id = 'a0000000-0000-4000-8000-000000000003';
 insert into public.challenges (created_by, title, description, icon, xp_reward)
 select 'a0000000-0000-4000-8000-000000000002', v.title, v.descr, v.icon, v.xp
 from (values
-  ('Catat 3 Transaksi Hari Ini', 'Catat minimal tiga transaksi sebelum tidur. Sekecil apa pun, tetap dicatat!', '📝', 30),
-  ('Cek Perisai HP',             'Buka halaman Anggaran dan pastikan tidak ada bar HP yang merah.',            '🛡️', 20),
-  ('Nol Jajan Impulsif',         'Seharian tidak membeli sesuatu yang tidak direncanakan.',                    '🧘', 40),
-  ('Setor Tabungan Receh',       'Setor berapa pun ke salah satu quest tabunganmu.',                           '🐷', 25),
-  ('Rapikan Kategori',           'Periksa transaksi yang masih "Tanpa kategori" dan rapikan.',                 '🗂️', 15)
+  ('Catat 3 Transaksi Hari Ini', 'Catat minimal tiga transaksi sebelum tidur. Sekecil apa pun, tetap dicatat!', 'notebook-pen', 30),
+  ('Cek Perisai HP',             'Buka halaman Anggaran dan pastikan tidak ada bar HP yang merah.',            'shield-check', 20),
+  ('Nol Jajan Impulsif',         'Seharian tidak membeli sesuatu yang tidak direncanakan.',                    'leaf', 40),
+  ('Setor Tabungan Receh',       'Setor berapa pun ke salah satu quest tabunganmu.',                           'piggy-bank', 25),
+  ('Rapikan Kategori',           'Periksa transaksi yang masih "Tanpa kategori" dan rapikan.',                 'folders', 15)
 ) as v(title, descr, icon, xp)
 where exists (select 1 from public.profiles where id = 'a0000000-0000-4000-8000-000000000002')
   and not exists (select 1 from public.challenges c where c.title = v.title);
@@ -226,19 +226,19 @@ begin
 
   -- Kategori pribadi
   insert into public.categories (user_id, name, icon, color, kind) values
-    (uid, 'Kopi Sore', '☕', '#c2855a', 'expense'),
-    (uid, 'Freelance', '💻', '#2dd4bf', 'income')
+    (uid, 'Kopi Sore', 'coffee', '#c2855a', 'expense'),
+    (uid, 'Freelance', 'laptop', '#2dd4bf', 'income')
   on conflict do nothing;
   select id into c_kopi from public.categories where user_id = uid and name = 'Kopi Sore';
   select id into c_free from public.categories where user_id = uid and name = 'Freelance';
 
   -- 3 dompet
   insert into public.wallets (user_id, name, type, icon, color, initial_balance) values
-    (uid, 'Dompet Tunai',  'cash',    '👛', '#fbbf24', 250000) returning id into w_cash;
+    (uid, 'Dompet Tunai',  'cash',    'wallet', '#fbbf24', 250000) returning id into w_cash;
   insert into public.wallets (user_id, name, type, icon, color, initial_balance) values
-    (uid, 'Rekening Bank', 'bank',    '🏦', '#38bdf8', 3000000) returning id into w_bank;
+    (uid, 'Rekening Bank', 'bank',    'landmark', '#38bdf8', 3000000) returning id into w_bank;
   insert into public.wallets (user_id, name, type, icon, color, initial_balance) values
-    (uid, 'E-Wallet',      'ewallet', '📱', '#a78bfa', 500000) returning id into w_ewallet;
+    (uid, 'E-Wallet',      'ewallet', 'smartphone', '#a78bfa', 500000) returning id into w_ewallet;
 
   -- Pemasukan (bulan lalu & bulan ini)
   insert into public.transactions (user_id, wallet_id, category_id, kind, amount, note, occurred_on) values
@@ -277,11 +277,11 @@ begin
 
   -- 2 quest tabungan (+ 1 quest selesai) beserta setoran
   insert into public.savings_goals (user_id, name, icon, target_amount, deadline)
-    values (uid, 'Laptop Baru', '💻', 8000000, (today + 120)) returning id into g_laptop;
+    values (uid, 'Laptop Baru', 'laptop', 8000000, (today + 120)) returning id into g_laptop;
   insert into public.savings_goals (user_id, name, icon, target_amount, deadline)
-    values (uid, 'Liburan Akhir Tahun', '🏝️', 5000000, (today + 200)) returning id into g_trip;
+    values (uid, 'Liburan Akhir Tahun', 'tree-palm', 5000000, (today + 200)) returning id into g_trip;
   insert into public.savings_goals (user_id, name, icon, target_amount, deadline)
-    values (uid, 'Headset Gaming', '🎧', 750000, (today - 10)) returning id into g_headset;
+    values (uid, 'Headset Gaming', 'headphones', 750000, (today - 10)) returning id into g_headset;
 
   insert into public.goal_deposits (user_id, goal_id, amount, note, deposited_on) values
     (uid, g_headset, 250000, 'Setoran 1', today - 50),

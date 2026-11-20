@@ -4,12 +4,15 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { friendlyError } from "@/lib/errors";
 import { useGame } from "@/components/game/GameFeedback";
-import { Can } from "@/components/layout/SessionProvider";
+import { useSession } from "@/components/layout/SessionProvider";
+import { RowMenu } from "@/components/ui/RowMenu";
+import { PICKER_SETS } from "@/lib/icons";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { ColorPicker, EmojiPicker, Field, Input, Segmented } from "@/components/ui/Form";
+import { ColorPicker, IconPicker, Field, Input, Segmented } from "@/components/ui/Form";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
-import { Badge, EmptyState, SectionTitle } from "@/components/ui/Misc";
+import { Badge, EmptyState, IconTile, SectionTitle } from "@/components/ui/Misc";
 import type { Category, Kind } from "@/lib/types";
 
 interface Form { id?: string; scope: "personal" | "global"; name: string; icon: string; color: string; kind: Kind }
@@ -28,6 +31,7 @@ export function CategoriesManager({
   canGlobal: boolean;
 }) {
   const { toast, refresh } = useGame();
+  const { permissions } = useSession();
   const [form, setForm] = useState<Form | null>(null);
   const [del, setDel] = useState<Category | null>(null);
   const [busy, setBusy] = useState(false);
@@ -59,39 +63,32 @@ export function CategoriesManager({
     refresh();
   }
 
-  const row = (c: Category, editable: boolean, perms: { update: string; delete: string }) => (
-    <div key={c.id} className="flex items-center gap-3 px-2 py-2.5">
-      <span className="grid h-10 w-10 place-items-center rounded-xl text-xl" style={{ background: c.color + "33", border: `2px solid ${c.color}` }}>
-        {c.icon}
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-bold">{c.name}</p>
-        <Badge color={c.kind === "income" ? "#10b981" : "#f43f5e"}>{c.kind === "income" ? "Pemasukan" : "Pengeluaran"}</Badge>
-      </div>
-      {editable && (
-        <div className="flex gap-3 text-xs font-extrabold">
-          <Can perm={perms.update}>
-            <button className="text-volt hover:underline" onClick={() => setForm({ id: c.id, scope: c.user_id ? "personal" : "global", name: c.name, icon: c.icon, color: c.color, kind: c.kind })}>
-              Ubah
-            </button>
-          </Can>
-          <Can perm={perms.delete}>
-            <button className="text-rubi hover:underline" onClick={() => setDel(c)}>
-              Hapus
-            </button>
-          </Can>
+  const row = (c: Category, editable: boolean, perms: { update: string; delete: string }) => {
+    const items = [
+      ...(editable && permissions.includes(perms.update)
+        ? [{ label: "Ubah", icon: <Pencil size={15} />, onClick: () => setForm({ id: c.id, scope: c.user_id ? ("personal" as const) : ("global" as const), name: c.name, icon: c.icon, color: c.color, kind: c.kind }) }]
+        : []),
+      ...(editable && permissions.includes(perms.delete) ? [{ label: "Hapus", icon: <Trash2 size={15} />, danger: true, onClick: () => setDel(c) }] : []),
+    ];
+    return (
+      <div key={c.id} className="flex items-center gap-3 px-2 py-2.5">
+        <IconTile icon={c.icon} color={c.color} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-semibold">{c.name}</p>
+          <Badge color={c.kind === "income" ? "#34d399" : "#fb7185"}>{c.kind === "income" ? "Pemasukan" : "Pengeluaran"}</Badge>
         </div>
-      )}
-    </div>
-  );
+        <RowMenu items={items} />
+      </div>
+    );
+  };
 
   return (
     <>
       <div className="mb-2 flex flex-wrap gap-3">
-        {canPersonal && <Button onClick={() => setForm({ scope: "personal", name: "", icon: "🪙", color: "#fbbf24", kind: "expense" })}>+ Kategori Pribadi</Button>}
+        {canPersonal && <Button onClick={() => setForm({ scope: "personal", name: "", icon: "coins", color: "#f5b83d", kind: "expense" })}><Plus size={16} /> Kategori Pribadi</Button>}
         {canGlobal && (
-          <Button variant="blue" onClick={() => setForm({ scope: "global", name: "", icon: "🪙", color: "#fbbf24", kind: "expense" })}>
-            + Kategori Global
+          <Button variant="secondary" onClick={() => setForm({ scope: "global", name: "", icon: "coins", color: "#f5b83d", kind: "expense" })}>
+            <Plus size={16} /> Kategori Global
           </Button>
         )}
       </div>
@@ -100,9 +97,9 @@ export function CategoriesManager({
         <>
           <SectionTitle>Kategori Pribadi</SectionTitle>
           {personal.length === 0 ? (
-            <EmptyState emoji="🏷️" title="Belum ada kategori pribadi" text="Tambahkan label khusus, mis. Kopi Sore atau Freelance." />
+            <EmptyState icon="tags" title="Belum ada kategori pribadi" text="Tambahkan label khusus, mis. Kopi Sore atau Freelance." />
           ) : (
-            <Card tilt={false} className="divide-y divide-white/10 !p-2">
+            <Card className="divide-y divide-white/[0.07] !p-2">
               {personal.map((c) => row(c, true, { update: "categories.update", delete: "categories.delete" }))}
             </Card>
           )}
@@ -110,7 +107,7 @@ export function CategoriesManager({
       )}
 
       <SectionTitle>Kategori Global {canGlobal ? "" : "(bawaan)"}</SectionTitle>
-      <Card tilt={false} className="divide-y divide-white/10 !p-2">
+      <Card className="divide-y divide-white/[0.07] !p-2">
         {global.map((c) => row(c, canGlobal, { update: "categories.manage_global", delete: "categories.manage_global" }))}
       </Card>
 
@@ -120,7 +117,7 @@ export function CategoriesManager({
         title={form?.id ? "Ubah Kategori" : form?.scope === "global" ? "Kategori Global Baru" : "Kategori Baru"}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setForm(null)}>
+            <Button variant="secondary" onClick={() => setForm(null)}>
               Batal
             </Button>
             <Button loading={busy} onClick={save}>
@@ -142,7 +139,7 @@ export function CategoriesManager({
             <Field label="Nama kategori">
               <Input value={form.name} maxLength={40} onChange={(e) => setForm({ ...form, name: e.target.value })} autoFocus />
             </Field>
-            <EmojiPicker value={form.icon} onChange={(icon) => setForm({ ...form, icon })} />
+            <IconPicker value={form.icon} onChange={(icon) => setForm({ ...form, icon })} groups={PICKER_SETS.category} />
             <ColorPicker value={form.color} onChange={(color) => setForm({ ...form, color })} />
             <button type="submit" className="hidden" />
           </form>

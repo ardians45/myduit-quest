@@ -1,16 +1,22 @@
 "use client";
 
 import Link from "next/link";
+import { Loader2 } from "lucide-react";
 import type { ButtonHTMLAttributes, ReactNode, MouseEvent } from "react";
 
-type Variant = "gold" | "green" | "red" | "blue" | "ghost";
+/** Nama lama (gold/green/red/blue) tetap diterima agar kode halaman tidak perlu berubah. */
+type Variant = "primary" | "secondary" | "ghost" | "danger" | "success" | "gold" | "green" | "red" | "blue";
 
 const VARIANT: Record<Variant, string> = {
+  primary: "",
   gold: "",
-  green: "btn-green",
-  red: "btn-red",
-  blue: "btn-blue",
-  ghost: "btn-ghost",
+  blue: "",
+  success: "btn-success",
+  green: "btn-success",
+  danger: "btn-danger",
+  red: "btn-danger",
+  secondary: "btn-secondary",
+  ghost: "btn-secondary",
 };
 
 function buzz() {
@@ -27,8 +33,8 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
 }
 
-/** Tombol 3D: border bawah tebal, kilau atas, turun saat ditekan, getar di HP. */
-export function Button({ variant = "gold", small, loading, className = "", onClick, disabled, children, ...rest }: ButtonProps) {
+/** Tombol: primer bergradien violet, tekan = turun 1px + mengecil sedikit. */
+export function Button({ variant = "primary", small, loading, className = "", onClick, disabled, children, ...rest }: ButtonProps) {
   return (
     <button
       {...rest}
@@ -37,16 +43,36 @@ export function Button({ variant = "gold", small, loading, className = "", onCli
         buzz();
         onClick?.(e);
       }}
-      className={`btn3d ${VARIANT[variant]} ${small ? "btn-sm" : ""} ${className}`}
+      className={`btn ${VARIANT[variant]} ${small ? "btn-sm" : ""} ${className}`}
     >
-      {loading ? <span className="animate-pulse">Tunggu...</span> : children}
+      {loading ? (
+        <>
+          <Loader2 size={16} className="animate-spin" /> Tunggu...
+        </>
+      ) : (
+        children
+      )}
+    </button>
+  );
+}
+
+/** Tombol ikon persegi (aksi kecil di baris/list). */
+export function IconButton({
+  label,
+  children,
+  className = "",
+  ...rest
+}: ButtonHTMLAttributes<HTMLButtonElement> & { label: string; children: ReactNode }) {
+  return (
+    <button {...rest} aria-label={label} title={label} className={`btn btn-ghost btn-icon ${className}`}>
+      {children}
     </button>
   );
 }
 
 export function LinkButton({
   href,
-  variant = "gold",
+  variant = "primary",
   small,
   className = "",
   children,
@@ -58,7 +84,7 @@ export function LinkButton({
   children: ReactNode;
 }) {
   return (
-    <Link href={href} onClick={buzz} className={`btn3d ${VARIANT[variant]} ${small ? "btn-sm" : ""} ${className}`}>
+    <Link href={href} onClick={buzz} className={`btn ${VARIANT[variant]} ${small ? "btn-sm" : ""} ${className}`}>
       {children}
     </Link>
   );

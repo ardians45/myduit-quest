@@ -15,7 +15,7 @@ export default async function GoalsPage() {
   ]);
   return (
     <>
-      <PageHeader title="Quest Tabungan" subtitle="Tiap target adalah boss. Setor dana untuk mengurangi HP-nya!" icon="🐉" />
+      <PageHeader title="Quest Tabungan" subtitle="Tiap target adalah boss. Setor dana untuk mengurangi HP-nya!" icon="skull" />
       <GoalsManager goals={(goals.data ?? []) as GoalProgress[]} deposits={(deposits.data ?? []) as GoalDeposit[]} userId={userId} />
     </>
   );

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { AlertCircle, CheckCircle2, Rocket } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -44,13 +45,15 @@ export default function RegisterPage() {
   }
 
   return (
-    <Card tilt={false}>
-      <h2 className="mb-1 font-display text-2xl text-white">Buat Karakter Baru</h2>
-      <p className="mb-4 text-sm text-mute">Akun baru otomatis jadi Hero / Pemain.</p>
+    <Card hero className="!p-6">
+      <h2 className="mb-1 font-display text-xl font-bold text-white">Buat Karakter Baru</h2>
+      <p className="mb-5 text-sm text-mute">Akun baru otomatis jadi Hero / Pemain.</p>
       {info ? (
         <div>
-          <p role="status" className="mb-4 rounded-xl border-2 border-zamrud bg-zamrud/15 px-3 py-2 text-sm font-bold text-emerald-200">{info}</p>
-          <Link href="/login" className="font-extrabold text-volt underline">
+          <p role="status" className="mb-4 flex items-start gap-2 rounded-xl border border-emerald/30 bg-emerald/10 px-3 py-2 text-sm font-medium text-emerald-200">
+            <CheckCircle2 size={16} className="mt-0.5 shrink-0" /> {info}
+          </p>
+          <Link href="/login" className="font-semibold text-cyan hover:underline">
             Ke halaman masuk
           </Link>
         </div>
@@ -65,13 +68,17 @@ export default function RegisterPage() {
           <Field label="Password" hint="Minimal 8 karakter">
             <Input type="password" required minLength={8} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
           </Field>
-          {error && <p role="alert" className="mb-3 rounded-xl border-2 border-rubi bg-rubi/15 px-3 py-2 text-sm font-bold text-rose-200">{error}</p>}
-          <Button type="submit" variant="green" loading={loading} className="w-full">
-            Mulai Petualangan
+          {error && (
+            <p role="alert" className="mb-3 flex items-start gap-2 rounded-xl border border-rose/30 bg-rose/10 px-3 py-2 text-sm font-medium text-rose-200">
+              <AlertCircle size={16} className="mt-0.5 shrink-0" /> {error}
+            </p>
+          )}
+          <Button type="submit" variant="success" loading={loading} className="w-full">
+            <Rocket size={17} /> Mulai Petualangan
           </Button>
-          <p className="mt-4 text-center text-sm text-mute">
+          <p className="mt-5 text-center text-sm text-mute">
             Sudah punya akun?{" "}
-            <Link href="/login" className="font-extrabold text-volt underline">
+            <Link href="/login" className="font-semibold text-cyan hover:underline">
               Masuk
             </Link>
           </p>

@@ -1,7 +1,8 @@
 -- =====================================================================
--- Myduit Gweh - database lengkap (skema + seed) untuk SQL Editor Supabase
+-- Myduit Gweh - database lengkap (skema + ikon + seed) untuk SQL Editor Supabase
 -- Jalankan sekali jalan (Postgres 15+). Akun demo: lihat bagian seed.
--- Ini gabungan dari supabase/migrations/0001_schema.sql dan supabase/seed.sql.
+-- Ini gabungan dari supabase/migrations/0001_schema.sql,
+-- supabase/migrations/0002_icons_no_emoji.sql dan supabase/seed.sql (urutan itu).
 -- =====================================================================
 
 -- =====================================================================
@@ -53,7 +54,7 @@ create table if not exists public.profiles (
   id                 uuid primary key references auth.users(id) on delete cascade,
   email              text,
   display_name       text not null default 'Hero',
-  avatar             text not null default '🦊',
+  avatar             text not null default 'knight',
   role_id            uuid references public.roles(id) on delete restrict,
   is_active          boolean not null default true,
   xp                 integer not null default 0 check (xp >= 0),
@@ -72,7 +73,7 @@ create table if not exists public.categories (
   id         uuid primary key default gen_random_uuid(),
   user_id    uuid references public.profiles(id) on delete cascade, -- null = kategori global
   name       text not null,
-  icon       text not null default '🪙',
+  icon       text not null default 'coins',
   color      text not null default '#fbbf24',
   kind       text not null check (kind in ('income','expense')),
   created_at timestamptz not null default now()
@@ -85,7 +86,7 @@ create table if not exists public.wallets (
   user_id         uuid not null references public.profiles(id) on delete cascade,
   name            text not null,
   type            text not null default 'cash' check (type in ('cash','bank','ewallet','other')),
-  icon            text not null default '👛',
+  icon            text not null default 'wallet',
   color           text not null default '#fbbf24',
   initial_balance numeric(14,2) not null default 0,
   created_at      timestamptz not null default now()
@@ -121,7 +122,7 @@ create table if not exists public.savings_goals (
   id            uuid primary key default gen_random_uuid(),
   user_id       uuid not null references public.profiles(id) on delete cascade,
   name          text not null,
-  icon          text not null default '🐉',
+  icon          text not null default 'skull',
   target_amount numeric(14,2) not null check (target_amount > 0),
   deadline      date,
   status        text not null default 'active' check (status in ('active','completed')),
@@ -149,7 +150,7 @@ create table if not exists public.challenges (
   created_by  uuid default auth.uid() references public.profiles(id) on delete set null,
   title       text not null,
   description text,
-  icon        text not null default '🎯',
+  icon        text not null default 'target',
   xp_reward   integer not null default 20 check (xp_reward between 1 and 1000),
   is_active   boolean not null default true,
   created_at  timestamptz not null default now()
@@ -170,7 +171,7 @@ create table if not exists public.achievements (
   code           text not null unique,
   name           text not null,
   description    text,
-  icon           text not null default '🏆',
+  icon           text not null default 'trophy',
   condition_type text not null check (condition_type in
                    ('tx_count','streak','budget_guard','goals_completed','wallet_count','level','challenge_claims')),
   threshold      integer not null default 1 check (threshold >= 1),
@@ -520,11 +521,12 @@ $$;
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  insert into public.profiles (id, email, display_name, role_id)
+  insert into public.profiles (id, email, display_name, avatar, role_id)
   values (
     new.id,
     new.email,
     coalesce(nullif(trim(new.raw_user_meta_data->>'display_name'), ''), split_part(new.email, '@', 1)),
+    'knight',
     (select id from public.roles where code = 'pemain')
   )
   on conflict (id) do nothing;
@@ -637,7 +639,7 @@ select
   t.kind,
   t.category_id,
   coalesce(c.name, 'Tanpa kategori') as category_name,
-  coalesce(c.icon, '🪙') as category_icon,
+  coalesce(c.icon, 'coins') as category_icon,
   coalesce(c.color, '#94a3b8') as category_color,
   sum(t.amount) as total,
   count(*) as tx_count
@@ -810,6 +812,176 @@ revoke all on all tables in schema public from anon;
 
 
 -- =====================================================================
+-- Myduit Gweh - Migrasi 0002: ikon berupa kunci (tanpa emoji)
+-- Kolom icon / avatar sekarang menyimpan KUNCI ikon (mis. 'utensils')
+-- atau KUNCI avatar (mis. 'knight'), bukan karakter emoji.
+-- Idempoten: aman dijalankan berulang, dan di atas data kosong.
+-- Emoji lama dikenali lewat codepoint (U+FE0F dibuang lebih dulu),
+-- jadi file ini sendiri tidak berisi karakter emoji.
+-- =====================================================================
+
+-- 1) Default kolom -> kunci
+alter table public.categories      alter column icon   set default 'coins';
+alter table public.wallets         alter column icon   set default 'wallet';
+alter table public.savings_goals   alter column icon   set default 'skull';
+alter table public.challenges      alter column icon   set default 'target';
+alter table public.achievements    alter column icon   set default 'trophy';
+alter table public.profiles        alter column avatar set default 'knight';
+
+-- 2) Fungsi pemeta (sementara, hilang saat sesi berakhir)
+-- Nilai yang sudah berupa kunci dibiarkan. Emoji lama dipetakan lewat codepoint
+-- karakter pertama. Tidak dikenal -> nilai default kolom (p_default).
+create or replace function pg_temp.icon_key(p_val text, p_default text)
+returns text language plpgsql immutable as $$
+declare
+  v text;
+  cp int;
+begin
+  if p_val is null or btrim(p_val) = '' then
+    return p_default;
+  end if;
+  if p_val ~ '^[a-z][a-z0-9-]*$' then
+    return p_val;
+  end if;
+  v := replace(p_val, chr(65039), '');
+  if v = '' then
+    return p_default;
+  end if;
+  cp := ascii(v);
+  return case cp
+    when 129689 then 'coins'          -- koin
+    when 128176 then 'banknote'       -- kantong uang
+    when 127836 then 'utensils'       -- mangkuk mi
+    when 9749   then 'coffee'         -- kopi
+    when 128652 then 'bus'            -- bus
+    when 128717 then 'shopping-bag'   -- tas belanja
+    when 129534 then 'receipt'        -- struk
+    when 127918 then 'gamepad'        -- gamepad
+    when 128138 then 'pill'           -- pil
+    when 128218 then 'book-open'      -- buku bertumpuk
+    when 127873 then 'gift'           -- kado
+    when 128188 then 'briefcase'      -- tas kerja
+    when 127890 then 'backpack'       -- ransel
+    when 128736 then 'wrench'         -- palu dan kunci pas
+    when 128187 then 'laptop'         -- laptop
+    when 127968 then 'house'          -- rumah
+    when 9992   then 'plane'          -- pesawat
+    when 127911 then 'headphones'     -- headphone
+    when 128055 then 'piggy-bank'     -- wajah babi
+    when 128009 then 'skull'          -- naga
+    when 128091 then 'wallet'         -- dompet kecil
+    when 127974 then 'landmark'       -- bank
+    when 128241 then 'smartphone'     -- ponsel
+    when 128179 then 'credit-card'    -- kartu kredit
+    when 128230 then 'package'        -- paket
+    when 127965 then 'tree-palm'      -- pulau
+    when 128663 then 'car'            -- mobil
+    when 127891 then 'graduation-cap' -- topi wisuda
+    when 128099 then 'footprints'     -- jejak kaki
+    when 128210 then 'notebook'       -- buku catatan
+    when 128220 then 'scroll-text'    -- gulungan
+    when 128293 then 'flame'          -- api
+    when 9732   then 'zap'            -- komet
+    when 128737 then 'shield-check'   -- perisai
+    when 127942 then 'trophy'         -- piala
+    when 127919 then 'target'         -- sasaran
+    when 128221 then 'notebook-pen'   -- memo
+    when 129496 then 'leaf'           -- orang bermeditasi
+    when 128450 then 'folders'        -- pembatas kartu
+    when 128161 then 'lightbulb'      -- lampu
+    when 128640 then 'rocket'         -- roket
+    else p_default
+  end;
+end;
+$$;
+
+create or replace function pg_temp.avatar_key(p_val text)
+returns text language plpgsql immutable as $$
+declare
+  v text;
+begin
+  if p_val is null or btrim(p_val) = '' then
+    return 'knight';
+  end if;
+  if p_val ~ '^[a-z][a-z0-9-]*$' then
+    return p_val;
+  end if;
+  v := replace(p_val, chr(65039), '');
+  return case ascii(v)
+    when 129418 then 'fox'     -- rubah
+    when 129497 then 'mage'    -- penyihir
+    when 129417 then 'owl'     -- burung hantu
+    when 128049 then 'rogue'   -- kucing
+    when 128060 then 'ranger'  -- panda
+    when 129409 then 'knight'  -- singa
+    when 128050 then 'dragon'  -- naga (wajah)
+    when 129399 then 'rogue'   -- ninja
+    when 129302 then 'robot'   -- robot
+    when 128126 then 'robot'   -- monster alien
+    else 'knight'
+  end;
+end;
+$$;
+
+-- 3) Ubah data lama. Trigger log aktivitas dan guard boss dimatikan sementara
+-- agar migrasi massal tidak membanjiri activity_logs atau memicu XP.
+-- (Dijalankan sebagai pemilik tabel; trigger dinyalakan lagi di akhir.)
+alter table public.categories    disable trigger log_activity;
+alter table public.wallets       disable trigger log_activity;
+alter table public.savings_goals disable trigger log_activity;
+alter table public.savings_goals disable trigger goal_before_update;
+alter table public.challenges    disable trigger log_activity;
+alter table public.achievements  disable trigger log_activity;
+
+update public.categories   set icon = pg_temp.icon_key(icon, 'coins')        where icon is distinct from pg_temp.icon_key(icon, 'coins');
+update public.wallets      set icon = pg_temp.icon_key(icon, 'wallet')       where icon is distinct from pg_temp.icon_key(icon, 'wallet');
+update public.savings_goals set icon = pg_temp.icon_key(icon, 'skull')       where icon is distinct from pg_temp.icon_key(icon, 'skull');
+update public.challenges   set icon = pg_temp.icon_key(icon, 'target')       where icon is distinct from pg_temp.icon_key(icon, 'target');
+update public.achievements set icon = pg_temp.icon_key(icon, 'trophy')       where icon is distinct from pg_temp.icon_key(icon, 'trophy');
+update public.profiles     set avatar = pg_temp.avatar_key(avatar)           where avatar is distinct from pg_temp.avatar_key(avatar);
+
+alter table public.categories    enable trigger log_activity;
+alter table public.wallets       enable trigger log_activity;
+alter table public.savings_goals enable trigger log_activity;
+alter table public.savings_goals enable trigger goal_before_update;
+alter table public.challenges    enable trigger log_activity;
+alter table public.achievements  enable trigger log_activity;
+
+-- 4) View category_spending: ikon fallback berupa kunci
+create or replace view public.category_spending with (security_invoker = true) as
+select
+  t.user_id,
+  date_trunc('month', t.occurred_on)::date as month,
+  t.kind,
+  t.category_id,
+  coalesce(c.name, 'Tanpa kategori') as category_name,
+  coalesce(c.icon, 'coins') as category_icon,
+  coalesce(c.color, '#94a3b8') as category_color,
+  sum(t.amount) as total,
+  count(*) as tx_count
+from public.transactions t
+left join public.categories c on c.id = t.category_id
+group by t.user_id, date_trunc('month', t.occurred_on), t.kind, t.category_id, c.name, c.icon, c.color;
+
+-- 5) Fungsi pembuat profil: avatar default 'knight' (eksplisit)
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.profiles (id, email, display_name, avatar, role_id)
+  values (
+    new.id,
+    new.email,
+    coalesce(nullif(trim(new.raw_user_meta_data->>'display_name'), ''), split_part(new.email, '@', 1)),
+    'knight',
+    (select id from public.roles where code = 'pemain')
+  )
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+
+-- =====================================================================
 -- Myduit Gweh - Seed data
 -- Role, permission, matriks, kategori global, achievement, tantangan,
 -- 3 akun demo + data contoh pemain (2 bulan terakhir, relatif ke now()).
@@ -888,35 +1060,35 @@ on conflict do nothing;
 -- Kategori global
 -- ---------------------------------------------------------------------
 insert into public.categories (user_id, name, icon, color, kind) values
-  (null, 'Makanan & Minuman', '🍜', '#f97316', 'expense'),
-  (null, 'Transportasi',      '🚌', '#38bdf8', 'expense'),
-  (null, 'Belanja',           '🛍️', '#e879f9', 'expense'),
-  (null, 'Tagihan',           '🧾', '#facc15', 'expense'),
-  (null, 'Hiburan',           '🎮', '#a78bfa', 'expense'),
-  (null, 'Kesehatan',         '💊', '#fb7185', 'expense'),
-  (null, 'Pendidikan',        '📚', '#34d399', 'expense'),
-  (null, 'Lainnya',           '📦', '#94a3b8', 'expense'),
-  (null, 'Gaji',              '💼', '#10b981', 'income'),
-  (null, 'Uang Saku',         '🎒', '#22d3ee', 'income'),
-  (null, 'Bonus',             '🎁', '#fbbf24', 'income'),
-  (null, 'Usaha Sampingan',   '🛠️', '#84cc16', 'income'),
-  (null, 'Pemasukan Lainnya', '💰', '#94a3b8', 'income')
+  (null, 'Makanan & Minuman', 'utensils', '#f97316', 'expense'),
+  (null, 'Transportasi',      'bus', '#38bdf8', 'expense'),
+  (null, 'Belanja',           'shopping-bag', '#e879f9', 'expense'),
+  (null, 'Tagihan',           'receipt', '#facc15', 'expense'),
+  (null, 'Hiburan',           'gamepad', '#a78bfa', 'expense'),
+  (null, 'Kesehatan',         'pill', '#fb7185', 'expense'),
+  (null, 'Pendidikan',        'book-open', '#34d399', 'expense'),
+  (null, 'Lainnya',           'package', '#94a3b8', 'expense'),
+  (null, 'Gaji',              'briefcase', '#10b981', 'income'),
+  (null, 'Uang Saku',         'backpack', '#22d3ee', 'income'),
+  (null, 'Bonus',             'gift', '#fbbf24', 'income'),
+  (null, 'Usaha Sampingan',   'wrench', '#84cc16', 'income'),
+  (null, 'Pemasukan Lainnya', 'banknote', '#94a3b8', 'income')
 on conflict do nothing;
 
 -- ---------------------------------------------------------------------
 -- Achievement
 -- ---------------------------------------------------------------------
 insert into public.achievements (code, name, description, icon, condition_type, threshold, xp_reward) values
-  ('first_step',   'Langkah Pertama',  'Catat transaksi pertamamu.',                     '👣', 'tx_count',          1,   25),
-  ('tx_25',        'Pencatat Rajin',   'Catat 25 transaksi.',                            '📒', 'tx_count',          25,  50),
-  ('tx_100',       'Juru Catat Legendaris', 'Catat 100 transaksi.',                      '📜', 'tx_count',          100, 150),
-  ('streak_7',     'Streak 7 Hari',    'Mencatat keuangan 7 hari berturut-turut.',       '🔥', 'streak',            7,   75),
-  ('streak_30',    'Streak 30 Hari',   'Mencatat keuangan 30 hari berturut-turut.',      '☄️', 'streak',            30,  200),
-  ('budget_guard', 'Penjaga Anggaran', 'Selesaikan satu bulan tanpa melewati anggaran.', '🛡️', 'budget_guard',      1,   60),
-  ('boss_slayer',  'Pembunuh Boss',    'Kalahkan boss pertamamu (quest tabungan selesai).', '🐉', 'goals_completed',  1,   100),
-  ('collector',    'Kolektor',         'Punya 3 dompet.',                                '🎒', 'wallet_count',      3,   40),
-  ('level_5',      'Naik Kelas',       'Capai level 5.',                                 '🏆', 'level',             5,   100),
-  ('challenger',   'Penantang',        'Klaim 5 tantangan harian.',                      '🎯', 'challenge_claims',  5,   60)
+  ('first_step',   'Langkah Pertama',  'Catat transaksi pertamamu.',                     'footprints', 'tx_count',          1,   25),
+  ('tx_25',        'Pencatat Rajin',   'Catat 25 transaksi.',                            'notebook', 'tx_count',          25,  50),
+  ('tx_100',       'Juru Catat Legendaris', 'Catat 100 transaksi.',                      'scroll-text', 'tx_count',          100, 150),
+  ('streak_7',     'Streak 7 Hari',    'Mencatat keuangan 7 hari berturut-turut.',       'flame', 'streak',            7,   75),
+  ('streak_30',    'Streak 30 Hari',   'Mencatat keuangan 30 hari berturut-turut.',      'zap', 'streak',            30,  200),
+  ('budget_guard', 'Penjaga Anggaran', 'Selesaikan satu bulan tanpa melewati anggaran.', 'shield-check', 'budget_guard',      1,   60),
+  ('boss_slayer',  'Pembunuh Boss',    'Kalahkan boss pertamamu (quest tabungan selesai).', 'skull', 'goals_completed',  1,   100),
+  ('collector',    'Kolektor',         'Punya 3 dompet.',                                'backpack', 'wallet_count',      3,   40),
+  ('level_5',      'Naik Kelas',       'Capai level 5.',                                 'trophy', 'level',             5,   100),
+  ('challenger',   'Penantang',        'Klaim 5 tantangan harian.',                      'target', 'challenge_claims',  5,   60)
 on conflict (code) do nothing;
 
 -- ---------------------------------------------------------------------
@@ -931,9 +1103,9 @@ declare
 begin
   for u in
     select * from (values
-      ('a0000000-0000-4000-8000-000000000001'::uuid, 'admin@myduitgweh.app',  'Game Master',     '🧙'),
-      ('a0000000-0000-4000-8000-000000000002'::uuid, 'mentor@myduitgweh.app', 'Mentor Keuangan', '🦉'),
-      ('a0000000-0000-4000-8000-000000000003'::uuid, 'pemain@myduitgweh.app', 'Hero Demo',       '🦊')
+      ('a0000000-0000-4000-8000-000000000001'::uuid, 'admin@myduitgweh.app',  'Game Master',     'mage'),
+      ('a0000000-0000-4000-8000-000000000002'::uuid, 'mentor@myduitgweh.app', 'Mentor Keuangan', 'owl'),
+      ('a0000000-0000-4000-8000-000000000003'::uuid, 'pemain@myduitgweh.app', 'Hero Demo',       'fox')
     ) as v(id, email, display_name, avatar)
   loop
     if not exists (select 1 from auth.users where id = u.id or email = u.email) then
@@ -977,17 +1149,17 @@ end $$;
 -- Role & nama untuk akun demo (update setelah trigger membuat profil)
 update public.profiles set
   role_id = (select id from public.roles where code = 'admin'),
-  display_name = 'Game Master', avatar = '🧙'
+  display_name = 'Game Master', avatar = 'mage'
 where id = 'a0000000-0000-4000-8000-000000000001';
 
 update public.profiles set
   role_id = (select id from public.roles where code = 'mentor'),
-  display_name = 'Mentor Keuangan', avatar = '🦉'
+  display_name = 'Mentor Keuangan', avatar = 'owl'
 where id = 'a0000000-0000-4000-8000-000000000002';
 
 update public.profiles set
   role_id = (select id from public.roles where code = 'pemain'),
-  display_name = 'Hero Demo', avatar = '🦊'
+  display_name = 'Hero Demo', avatar = 'fox'
 where id = 'a0000000-0000-4000-8000-000000000003';
 
 -- ---------------------------------------------------------------------
@@ -996,11 +1168,11 @@ where id = 'a0000000-0000-4000-8000-000000000003';
 insert into public.challenges (created_by, title, description, icon, xp_reward)
 select 'a0000000-0000-4000-8000-000000000002', v.title, v.descr, v.icon, v.xp
 from (values
-  ('Catat 3 Transaksi Hari Ini', 'Catat minimal tiga transaksi sebelum tidur. Sekecil apa pun, tetap dicatat!', '📝', 30),
-  ('Cek Perisai HP',             'Buka halaman Anggaran dan pastikan tidak ada bar HP yang merah.',            '🛡️', 20),
-  ('Nol Jajan Impulsif',         'Seharian tidak membeli sesuatu yang tidak direncanakan.',                    '🧘', 40),
-  ('Setor Tabungan Receh',       'Setor berapa pun ke salah satu quest tabunganmu.',                           '🐷', 25),
-  ('Rapikan Kategori',           'Periksa transaksi yang masih "Tanpa kategori" dan rapikan.',                 '🗂️', 15)
+  ('Catat 3 Transaksi Hari Ini', 'Catat minimal tiga transaksi sebelum tidur. Sekecil apa pun, tetap dicatat!', 'notebook-pen', 30),
+  ('Cek Perisai HP',             'Buka halaman Anggaran dan pastikan tidak ada bar HP yang merah.',            'shield-check', 20),
+  ('Nol Jajan Impulsif',         'Seharian tidak membeli sesuatu yang tidak direncanakan.',                    'leaf', 40),
+  ('Setor Tabungan Receh',       'Setor berapa pun ke salah satu quest tabunganmu.',                           'piggy-bank', 25),
+  ('Rapikan Kategori',           'Periksa transaksi yang masih "Tanpa kategori" dan rapikan.',                 'folders', 15)
 ) as v(title, descr, icon, xp)
 where exists (select 1 from public.profiles where id = 'a0000000-0000-4000-8000-000000000002')
   and not exists (select 1 from public.challenges c where c.title = v.title);
@@ -1037,19 +1209,19 @@ begin
 
   -- Kategori pribadi
   insert into public.categories (user_id, name, icon, color, kind) values
-    (uid, 'Kopi Sore', '☕', '#c2855a', 'expense'),
-    (uid, 'Freelance', '💻', '#2dd4bf', 'income')
+    (uid, 'Kopi Sore', 'coffee', '#c2855a', 'expense'),
+    (uid, 'Freelance', 'laptop', '#2dd4bf', 'income')
   on conflict do nothing;
   select id into c_kopi from public.categories where user_id = uid and name = 'Kopi Sore';
   select id into c_free from public.categories where user_id = uid and name = 'Freelance';
 
   -- 3 dompet
   insert into public.wallets (user_id, name, type, icon, color, initial_balance) values
-    (uid, 'Dompet Tunai',  'cash',    '👛', '#fbbf24', 250000) returning id into w_cash;
+    (uid, 'Dompet Tunai',  'cash',    'wallet', '#fbbf24', 250000) returning id into w_cash;
   insert into public.wallets (user_id, name, type, icon, color, initial_balance) values
-    (uid, 'Rekening Bank', 'bank',    '🏦', '#38bdf8', 3000000) returning id into w_bank;
+    (uid, 'Rekening Bank', 'bank',    'landmark', '#38bdf8', 3000000) returning id into w_bank;
   insert into public.wallets (user_id, name, type, icon, color, initial_balance) values
-    (uid, 'E-Wallet',      'ewallet', '📱', '#a78bfa', 500000) returning id into w_ewallet;
+    (uid, 'E-Wallet',      'ewallet', 'smartphone', '#a78bfa', 500000) returning id into w_ewallet;
 
   -- Pemasukan (bulan lalu & bulan ini)
   insert into public.transactions (user_id, wallet_id, category_id, kind, amount, note, occurred_on) values
@@ -1088,11 +1260,11 @@ begin
 
   -- 2 quest tabungan (+ 1 quest selesai) beserta setoran
   insert into public.savings_goals (user_id, name, icon, target_amount, deadline)
-    values (uid, 'Laptop Baru', '💻', 8000000, (today + 120)) returning id into g_laptop;
+    values (uid, 'Laptop Baru', 'laptop', 8000000, (today + 120)) returning id into g_laptop;
   insert into public.savings_goals (user_id, name, icon, target_amount, deadline)
-    values (uid, 'Liburan Akhir Tahun', '🏝️', 5000000, (today + 200)) returning id into g_trip;
+    values (uid, 'Liburan Akhir Tahun', 'tree-palm', 5000000, (today + 200)) returning id into g_trip;
   insert into public.savings_goals (user_id, name, icon, target_amount, deadline)
-    values (uid, 'Headset Gaming', '🎧', 750000, (today - 10)) returning id into g_headset;
+    values (uid, 'Headset Gaming', 'headphones', 750000, (today - 10)) returning id into g_headset;
 
   insert into public.goal_deposits (user_id, goal_id, amount, note, deposited_on) values
     (uid, g_headset, 250000, 'Setoran 1', today - 50),
@@ -1124,3 +1296,4 @@ begin
    where entity = 'transactions' and action = 'create' and user_id = uid
      and (detail->>'occurred_on') is not null;
 end $$;
+

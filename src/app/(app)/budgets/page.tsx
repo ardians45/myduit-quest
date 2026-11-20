@@ -18,7 +18,7 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
   ]);
   return (
     <>
-      <PageHeader title="Perisai HP" subtitle="Anggaran per kategori: jaga HP-mu jangan sampai habis" icon="🛡️" />
+      <PageHeader title="Perisai HP" subtitle="Anggaran per kategori: jaga HP-mu jangan sampai habis" icon="shield-check" />
       <BudgetsManager key={month} month={month} budgets={(budgets.data ?? []) as BudgetStatus[]} categories={(cats.data ?? []) as Category[]} userId={userId} />
     </>
   );

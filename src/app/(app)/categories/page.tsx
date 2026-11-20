@@ -13,7 +13,7 @@ export default async function CategoriesPage() {
   const all = (data ?? []) as Category[];
   return (
     <>
-      <PageHeader title="Kategori" subtitle="Label untuk loot dan damage-mu" icon="🏷️" />
+      <PageHeader title="Kategori" subtitle="Label untuk loot dan damage-mu" icon="coins" />
       <CategoriesManager
         global={all.filter((c) => !c.user_id)}
         personal={all.filter((c) => c.user_id === session.userId)}

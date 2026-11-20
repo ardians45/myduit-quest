@@ -35,7 +35,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
 
   return (
     <>
-      <PageHeader title="Loot & Damage" subtitle="Catat pemasukan (loot) dan pengeluaran (damage)" icon="⚔️" />
+      <PageHeader title="Loot & Damage" subtitle="Catat pemasukan (loot) dan pengeluaran (damage)" icon="swords" />
       <TransactionsManager
         key={sp.new === "1" ? "new" : "list"}
         transactions={(tx.data ?? []) as Transaction[]}

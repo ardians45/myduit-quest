@@ -47,7 +47,7 @@ create table if not exists public.profiles (
   id                 uuid primary key references auth.users(id) on delete cascade,
   email              text,
   display_name       text not null default 'Hero',
-  avatar             text not null default '🦊',
+  avatar             text not null default 'knight',
   role_id            uuid references public.roles(id) on delete restrict,
   is_active          boolean not null default true,
   xp                 integer not null default 0 check (xp >= 0),
@@ -66,7 +66,7 @@ create table if not exists public.categories (
   id         uuid primary key default gen_random_uuid(),
   user_id    uuid references public.profiles(id) on delete cascade, -- null = kategori global
   name       text not null,
-  icon       text not null default '🪙',
+  icon       text not null default 'coins',
   color      text not null default '#fbbf24',
   kind       text not null check (kind in ('income','expense')),
   created_at timestamptz not null default now()
@@ -79,7 +79,7 @@ create table if not exists public.wallets (
   user_id         uuid not null references public.profiles(id) on delete cascade,
   name            text not null,
   type            text not null default 'cash' check (type in ('cash','bank','ewallet','other')),
-  icon            text not null default '👛',
+  icon            text not null default 'wallet',
   color           text not null default '#fbbf24',
   initial_balance numeric(14,2) not null default 0,
   created_at      timestamptz not null default now()
@@ -115,7 +115,7 @@ create table if not exists public.savings_goals (
   id            uuid primary key default gen_random_uuid(),
   user_id       uuid not null references public.profiles(id) on delete cascade,
   name          text not null,
-  icon          text not null default '🐉',
+  icon          text not null default 'skull',
   target_amount numeric(14,2) not null check (target_amount > 0),
   deadline      date,
   status        text not null default 'active' check (status in ('active','completed')),
@@ -143,7 +143,7 @@ create table if not exists public.challenges (
   created_by  uuid default auth.uid() references public.profiles(id) on delete set null,
   title       text not null,
   description text,
-  icon        text not null default '🎯',
+  icon        text not null default 'target',
   xp_reward   integer not null default 20 check (xp_reward between 1 and 1000),
   is_active   boolean not null default true,
   created_at  timestamptz not null default now()
@@ -164,7 +164,7 @@ create table if not exists public.achievements (
   code           text not null unique,
   name           text not null,
   description    text,
-  icon           text not null default '🏆',
+  icon           text not null default 'trophy',
   condition_type text not null check (condition_type in
                    ('tx_count','streak','budget_guard','goals_completed','wallet_count','level','challenge_claims')),
   threshold      integer not null default 1 check (threshold >= 1),
@@ -514,11 +514,12 @@ $$;
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  insert into public.profiles (id, email, display_name, role_id)
+  insert into public.profiles (id, email, display_name, avatar, role_id)
   values (
     new.id,
     new.email,
     coalesce(nullif(trim(new.raw_user_meta_data->>'display_name'), ''), split_part(new.email, '@', 1)),
+    'knight',
     (select id from public.roles where code = 'pemain')
   )
   on conflict (id) do nothing;
@@ -631,7 +632,7 @@ select
   t.kind,
   t.category_id,
   coalesce(c.name, 'Tanpa kategori') as category_name,
-  coalesce(c.icon, '🪙') as category_icon,
+  coalesce(c.icon, 'coins') as category_icon,
   coalesce(c.color, '#94a3b8') as category_color,
   sum(t.amount) as total,
   count(*) as tx_count

@@ -12,7 +12,7 @@ export default async function WalletsPage() {
   const { data } = await supabase.from("wallet_balances").select("*").eq("user_id", userId).order("created_at");
   return (
     <>
-      <PageHeader title="Dompet" subtitle="Inventory: tempat semua hartamu disimpan" icon="👛" />
+      <PageHeader title="Dompet" subtitle="Inventory: tempat semua hartamu disimpan" icon="wallet" />
       <WalletsManager wallets={(data ?? []) as WalletBalance[]} userId={userId} />
     </>
   );

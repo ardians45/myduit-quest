@@ -6,10 +6,27 @@ import { friendlyError } from "@/lib/errors";
 import { useGame } from "@/components/game/GameFeedback";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Field, Input, TextArea } from "@/components/ui/Form";
+import { Field, Input, Switch, TextArea } from "@/components/ui/Form";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
 import { Badge, SectionTitle } from "@/components/ui/Misc";
+import { RowMenu } from "@/components/ui/RowMenu";
+import { ArrowLeftRight, BarChart3, Circle, Flag, KeyRound, LayoutDashboard, Pencil, Plus, ScrollText, ShieldHalf, Tags, Target, Trash2, Trophy, Users, Wallet, type LucideIcon } from "lucide-react";
 import type { Permission, Role } from "@/lib/types";
+
+const MODULE_ICON: Record<string, LucideIcon> = {
+  dashboard: LayoutDashboard,
+  wallets: Wallet,
+  transactions: ArrowLeftRight,
+  budgets: ShieldHalf,
+  goals: Target,
+  categories: Tags,
+  challenges: Flag,
+  reports: BarChart3,
+  users: Users,
+  rbac: KeyRound,
+  achievements: Trophy,
+  logs: ScrollText,
+};
 
 interface Form { id?: string; code: string; name: string; description: string; system: boolean }
 
@@ -81,39 +98,45 @@ export function RolesManager({
   return (
     <>
       <div className="mb-4">
-        <Button onClick={() => setForm({ code: "", name: "", description: "", system: false })}>+ Role Baru</Button>
+        <Button onClick={() => setForm({ code: "", name: "", description: "", system: false })}>
+          <Plus size={16} /> Role Baru
+        </Button>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {roles.map((r) => (
-          <Card key={r.id} tilt={false}>
-            <div className="flex items-center justify-between gap-2">
-              <p className="font-display text-xl">{r.name}</p>
-              {r.is_system && <Badge color="#a78bfa">Bawaan</Badge>}
+          <Card key={r.id}>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="font-display text-lg font-bold leading-tight">{r.name}</p>
+                <p className="num mt-0.5 text-xs font-semibold text-cyan">
+                  {r.code} · {userCount[r.id] ?? 0} pengguna
+                </p>
+              </div>
+              <div className="flex items-center gap-1">
+                {r.is_system && <Badge color="#8b5cf6">Bawaan</Badge>}
+                <RowMenu
+                  items={[
+                    { label: "Ubah", icon: <Pencil size={15} />, onClick: () => setForm({ id: r.id, code: r.code, name: r.name, description: r.description ?? "", system: r.is_system }) },
+                    ...(r.is_system ? [] : [{ label: "Hapus", icon: <Trash2 size={15} />, danger: true, onClick: () => setDel(r) }]),
+                  ]}
+                />
+              </div>
             </div>
-            <p className="text-xs font-bold text-volt">{r.code} · {userCount[r.id] ?? 0} pengguna</p>
-            <p className="mt-1 min-h-10 text-sm text-mute">{r.description}</p>
-            <div className="mt-2 flex gap-2">
-              <Button small variant="blue" onClick={() => setForm({ id: r.id, code: r.code, name: r.name, description: r.description ?? "", system: r.is_system })}>
-                Ubah
-              </Button>
-              <Button small variant="red" disabled={r.is_system} onClick={() => setDel(r)}>
-                Hapus
-              </Button>
-            </div>
+            <p className="mt-2 min-h-10 text-sm text-mute">{r.description}</p>
           </Card>
         ))}
       </div>
 
       <SectionTitle>Matriks Permission</SectionTitle>
-      <Card tilt={false} className="!p-0">
-        <div className="overflow-x-auto">
+      <Card className="!p-0">
+        <div className="max-h-[70vh] overflow-auto rounded-[20px]">
           <table className="w-full min-w-[520px] border-collapse text-sm">
             <thead>
-              <tr className="border-b-[3px] border-night-500">
-                <th className="sticky left-0 z-10 bg-night-800 px-3 py-3 text-left font-display text-base">Permission</th>
+              <tr>
+                <th className="sticky left-0 top-0 z-30 border-b border-white/10 bg-[#0d1126] px-3 py-3 text-left font-display text-sm font-bold">Permission</th>
                 {roles.map((r) => (
-                  <th key={r.id} className="px-3 py-3 text-center font-display text-base">
+                  <th key={r.id} className="sticky top-0 z-20 whitespace-nowrap border-b border-white/10 bg-[#0d1126] px-3 py-3 text-center font-display text-sm font-bold">
                     {r.name}
                   </th>
                 ))}
@@ -135,7 +158,7 @@ export function RolesManager({
         title={form?.id ? "Ubah Role" : "Role Baru"}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setForm(null)}>
+            <Button variant="secondary" onClick={() => setForm(null)}>
               Batal
             </Button>
             <Button loading={busy} onClick={save}>
@@ -180,17 +203,20 @@ function PermGroup({
   pending: string | null;
   onToggle: (r: Role, p: Permission) => void;
 }) {
+  const Icon = MODULE_ICON[module] ?? Circle;
   return (
     <>
-      <tr className="bg-night-900/70">
-        <td colSpan={roles.length + 1} className="px-3 py-1.5 text-xs font-extrabold uppercase tracking-widest text-gold">
-          {module}
+      <tr className="bg-[#0a0e1f]">
+        <td colSpan={roles.length + 1} className="px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-gold">
+          <span className="inline-flex items-center gap-2">
+            <Icon size={14} /> {module}
+          </span>
         </td>
       </tr>
       {perms.map((p) => (
-        <tr key={p.id} className="border-t border-white/10 hover:bg-white/5">
-          <td className="sticky left-0 bg-night-800 px-3 py-2">
-            <code className="font-bold text-white">{p.code}</code>
+        <tr key={p.id} className="border-t border-white/[0.06] hover:bg-white/[0.03]">
+          <td className="sticky left-0 z-10 bg-[#0d1126] px-3 py-2">
+            <code className="text-[13px] font-semibold text-white">{p.code}</code>
             <div className="text-xs text-mute">{p.description}</div>
           </td>
           {roles.map((r) => {
@@ -198,15 +224,14 @@ function PermGroup({
             const locked = r.code === "admin" && p.code === "rbac.manage";
             return (
               <td key={r.id} className="px-3 py-2 text-center">
-                <input
-                  type="checkbox"
-                  className="h-5 w-5 cursor-pointer accent-amber-400 disabled:cursor-not-allowed disabled:opacity-60"
-                  checked={set.has(key)}
-                  disabled={locked || pending === key}
-                  title={locked ? "Tidak boleh dicabut" : undefined}
-                  aria-label={`${p.code} untuk ${r.name}`}
-                  onChange={() => onToggle(r, p)}
-                />
+                <span title={locked ? "Tidak boleh dicabut" : undefined} className="inline-flex">
+                  <Switch
+                    checked={set.has(key)}
+                    disabled={locked || pending === key}
+                    label={`${p.code} untuk ${r.name}`}
+                    onChange={() => onToggle(r, p)}
+                  />
+                </span>
               </td>
             );
           })}

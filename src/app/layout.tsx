@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Lilita_One, Nunito } from "next/font/google";
+import { Sora, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
-const lilita = Lilita_One({ weight: "400", subsets: ["latin"], variable: "--font-lilita", display: "swap" });
-const nunito = Nunito({ subsets: ["latin"], variable: "--font-nunito", display: "swap" });
+const sora = Sora({ weight: ["600", "700", "800"], subsets: ["latin"], variable: "--font-sora", display: "swap" });
+const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-jakarta", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Myduit Gweh",
@@ -15,14 +15,14 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0e0d33",
+  themeColor: "#070A14",
   width: "device-width",
   initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id" className={`${lilita.variable} ${nunito.variable}`}>
+    <html lang="id" className={`${sora.variable} ${jakarta.variable}`}>
       <body>{children}</body>
     </html>
   );

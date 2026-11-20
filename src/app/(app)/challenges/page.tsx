@@ -26,7 +26,7 @@ export default async function ChallengesPage() {
 
   return (
     <>
-      <PageHeader title="Tantangan Harian" subtitle="Selesaikan misi dari Mentor, klaim XP-nya sekali per hari" icon="🎯" />
+      <PageHeader title="Tantangan Harian" subtitle="Selesaikan misi dari Mentor, klaim XP-nya sekali per hari" icon="target" />
       <ChallengesManager challenges={(ch.data ?? []) as Challenge[]} claimedToday={[...claimedToday]} totalClaims={totalClaims} canClaim={canClaim} canManage={canManage} />
     </>
   );

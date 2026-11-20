@@ -3,10 +3,12 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AlertCircle, CheckCircle2, Info, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useSession } from "@/components/layout/SessionProvider";
 import { levelTitle } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
+import { AchievementBadge, LevelEmblem } from "@/components/art";
 import type { Achievement } from "@/lib/types";
 
 type ToastKind = "success" | "error" | "info";
@@ -33,6 +35,13 @@ export function useGame(): GameApi {
 
 let seq = 1;
 
+const TOAST_STYLE: Record<ToastKind, string> = {
+  success: "border-emerald/30 bg-[#0b2a24]/95 text-emerald-100",
+  error: "border-rose/35 bg-[#33111f]/95 text-rose-100",
+  info: "border-cyan/30 bg-[#0b2433]/95 text-cyan-100",
+};
+const TOAST_ICON = { success: CheckCircle2, error: AlertCircle, info: Info } as const;
+
 export function GameFeedbackProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { profile } = useSession();
@@ -45,7 +54,7 @@ export function GameFeedbackProvider({ children }: { children: ReactNode }) {
   const celebrate = useCallback(() => {
     if (reduce) return;
     import("canvas-confetti").then(({ default: confetti }) => {
-      const colors = ["#fbbf24", "#10b981", "#38bdf8", "#f43f5e", "#a78bfa"];
+      const colors = ["#8b5cf6", "#22d3ee", "#f5b83d", "#34d399", "#fb7185"];
       confetti({ particleCount: 90, spread: 80, origin: { y: 0.6 }, colors, disableForReducedMotion: true });
       setTimeout(() => confetti({ particleCount: 50, angle: 60, spread: 60, origin: { x: 0, y: 0.7 }, colors }), 180);
       setTimeout(() => confetti({ particleCount: 50, angle: 120, spread: 60, origin: { x: 1, y: 0.7 }, colors }), 300);
@@ -94,35 +103,37 @@ export function GameFeedbackProvider({ children }: { children: ReactNode }) {
     <Ctx.Provider value={api}>
       {children}
 
-      {/* Popup +XP */}
-      <div className="pointer-events-none fixed inset-x-0 top-24 z-[95] flex flex-col items-center gap-1" aria-live="polite">
+      {/* Toast +XP: pill violet */}
+      <div className="pointer-events-none fixed inset-x-0 top-20 z-[95] flex flex-col items-center gap-2" aria-live="polite">
         {pops.map((p) => (
-          <div key={p.id} className="xp-pop">
-            +{p.xp} XP
+          <div
+            key={p.id}
+            className="xp-pop flex items-center gap-1.5 rounded-full border border-violet/50 bg-gradient-to-r from-[#5b45e0] to-[#8b5cf6] px-4 py-1.5 font-display text-sm font-bold text-white shadow-[0_10px_30px_-8px_rgba(139,92,246,0.9)]"
+          >
+            <Sparkles size={15} /> +{p.xp} XP
           </div>
         ))}
       </div>
 
-      {/* Toast */}
+      {/* Toast umum */}
       <div className="pointer-events-none fixed inset-x-0 bottom-28 z-[95] flex flex-col items-center gap-2 px-4 lg:bottom-6" role="status">
         <AnimatePresence>
-          {toasts.map((t) => (
-            <motion.div
-              key={t.id}
-              initial={{ opacity: 0, y: 16, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10 }}
-              className={`pointer-events-auto max-w-sm rounded-2xl border-[3px] px-4 py-2.5 text-sm font-extrabold shadow-xl ${
-                t.kind === "error"
-                  ? "border-rubi bg-[#3a0d1c] text-rose-100"
-                  : t.kind === "info"
-                    ? "border-volt bg-[#0c2a45] text-sky-100"
-                    : "border-zamrud bg-[#06352a] text-emerald-100"
-              }`}
-            >
-              {t.text}
-            </motion.div>
-          ))}
+          {toasts.map((t) => {
+            const Icon = TOAST_ICON[t.kind];
+            return (
+              <motion.div
+                key={t.id}
+                initial={{ opacity: 0, y: 16, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10 }}
+                transition={{ type: "spring", damping: 24, stiffness: 320 }}
+                className={`pointer-events-auto flex max-w-sm items-center gap-2.5 rounded-2xl border px-4 py-2.5 text-sm font-semibold shadow-2xl backdrop-blur-md ${TOAST_STYLE[t.kind]}`}
+              >
+                <Icon size={18} className="shrink-0" />
+                {t.text}
+              </motion.div>
+            );
+          })}
         </AnimatePresence>
       </div>
 
@@ -131,42 +142,62 @@ export function GameFeedbackProvider({ children }: { children: ReactNode }) {
         {current && (
           <motion.div
             key={current.type === "level" ? `l${current.level}` : current.ach.id}
-            className="fixed inset-0 z-[90] grid place-items-center bg-black/75 p-4"
+            className="fixed inset-0 z-[90] grid place-items-center bg-[#03050d]/80 p-4 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
             <motion.div
-              initial={reduce ? false : { scale: 0.6, rotate: -4, opacity: 0 }}
-              animate={{ scale: 1, rotate: 0, opacity: 1 }}
-              transition={{ type: "spring", damping: 12, stiffness: 220 }}
-              className="card3d card-gold card-flat w-full max-w-sm text-center"
+              initial={reduce ? false : { scale: 0.85, y: 16, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              transition={{ type: "spring", damping: 18, stiffness: 260 }}
+              className="card card-hero w-full max-w-sm px-6 py-7 text-center"
               role="dialog"
               aria-modal="true"
             >
               {current.type === "level" ? (
                 <>
-                  <div className="font-display text-sm uppercase tracking-widest text-volt">Level Up!</div>
-                  <div className="my-2 font-display text-7xl text-gold drop-shadow-[0_4px_0_#7c2d12]">{current.level}</div>
-                  <p className="font-display text-2xl text-white">{levelTitle(current.level)}</p>
-                  <p className="mt-1 text-sm text-amber-100/80">Keren! Terus catat keuanganmu biar makin sakti.</p>
+                  <div className="text-xs font-bold uppercase tracking-[0.18em] text-cyan">Level Up</div>
+                  <motion.div
+                    className="mx-auto my-3 w-fit"
+                    initial={reduce ? false : { scale: 0.3, rotate: -15 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: "spring", damping: 10, stiffness: 180, delay: 0.1 }}
+                  >
+                    <LevelEmblem level={current.level} size={132} />
+                  </motion.div>
+                  <p className="font-display text-2xl font-bold text-white">{levelTitle(current.level)}</p>
+                  <p className="mt-1 text-sm text-mute">Keren! Terus catat keuanganmu biar makin sakti.</p>
                 </>
               ) : (
                 <>
-                  <div className="font-display text-sm uppercase tracking-widest text-volt">Achievement Terbuka!</div>
-                  <div className="my-3 text-7xl">{current.ach.icon}</div>
-                  <p className="font-display text-2xl text-white">{current.ach.name}</p>
-                  <p className="mt-1 text-sm text-amber-100/80">{current.ach.description}</p>
-                  {current.ach.xp_reward > 0 && <p className="mt-2 font-display text-xl text-volt">+{current.ach.xp_reward} XP</p>}
+                  <div className="text-xs font-bold uppercase tracking-[0.18em] text-gold">Achievement Terbuka</div>
+                  <motion.div
+                    className="mx-auto my-4 w-fit"
+                    initial={reduce ? false : { scale: 0.2, rotate: -240, opacity: 0 }}
+                    animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                    transition={{ type: "spring", damping: 12, stiffness: 120, delay: 0.1 }}
+                  >
+                    <AchievementBadge icon={current.ach.icon} size={112} />
+                  </motion.div>
+                  <p className="font-display text-xl font-bold text-white">{current.ach.name}</p>
+                  <p className="mt-1 text-sm text-mute">{current.ach.description}</p>
+                  {current.ach.xp_reward > 0 && (
+                    <p className="mt-3 inline-flex items-center gap-1 rounded-full bg-violet/20 px-3 py-1 font-display text-sm font-bold text-violet-200">
+                      <Sparkles size={14} /> +{current.ach.xp_reward} XP
+                    </p>
+                  )}
                 </>
               )}
-              <div className="mt-5 flex justify-center">
+              <div className="mt-6 flex justify-center">
                 <Button
                   onClick={() => {
                     if (queue.length > 1) celebrate();
                     setQueue((q) => q.slice(1));
                   }}
-                >Mantap!</Button>
+                >
+                  Mantap
+                </Button>
               </div>
             </motion.div>
           </motion.div>

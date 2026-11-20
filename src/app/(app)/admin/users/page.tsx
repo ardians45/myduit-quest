@@ -15,7 +15,7 @@ export default async function AdminUsersPage() {
   ]);
   return (
     <>
-      <PageHeader title="Pengguna" subtitle="Atur role dan status akun para pemain" icon="👥" />
+      <PageHeader title="Pengguna" subtitle="Atur role dan status akun para pemain" icon="crown" />
       <UsersManager users={(users.data ?? []) as Profile[]} roles={(roles.data ?? []) as Role[]} selfId={userId} />
     </>
   );

@@ -23,7 +23,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   if (!target) {
     return (
       <>
-        <PageHeader title="Laporan" subtitle="Grafik keuangan pemain" icon="📊" />
+        <PageHeader title="Laporan" subtitle="Grafik keuangan pemain" icon="trending-up" />
         <ReportView viewAll players={players} target="" month={month} cashflow={[]} categories={[]} daily={[]} balance={0} />
       </>
     );
@@ -48,7 +48,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
   return (
     <>
-      <PageHeader title="Laporan" subtitle={viewAll ? "Pantau perkembangan semua pemain (hanya lihat)" : "Perjalanan keuanganmu dalam grafik"} icon="📊" />
+      <PageHeader title="Laporan" subtitle={viewAll ? "Pantau perkembangan semua pemain (hanya lihat)" : "Perjalanan keuanganmu dalam grafik"} icon="trending-up" />
       <ReportView
         viewAll={viewAll}
         players={players}

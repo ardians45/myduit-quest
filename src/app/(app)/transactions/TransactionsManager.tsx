@@ -3,17 +3,19 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Filter, Search } from "lucide-react";
+import { Filter, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { friendlyError } from "@/lib/errors";
 import { fmtDay, rupiah, todayWIB } from "@/lib/format";
 import { useGame } from "@/components/game/GameFeedback";
-import { Can } from "@/components/layout/SessionProvider";
+import { Can, useCan } from "@/components/layout/SessionProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input, Segmented, Select } from "@/components/ui/Form";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
-import { EmptyState, StatTile } from "@/components/ui/Misc";
+import { EmptyState, IconTile, StatTile } from "@/components/ui/Misc";
+import { RowMenu } from "@/components/ui/RowMenu";
+import { AppIcon } from "@/lib/icons";
 import type { Category, Kind, Transaction } from "@/lib/types";
 
 interface Filters { from: string; to: string; kind: string; category: string; wallet: string; q: string }
@@ -50,6 +52,8 @@ export function TransactionsManager({
   const [f, setF] = useState<Filters>(filters);
   const [showFilters, setShowFilters] = useState(Boolean(filters.from || filters.to || filters.category || filters.wallet));
 
+  const canUpdate = useCan("transactions.update");
+  const canDelete = useCan("transactions.delete");
   const income = transactions.filter((t) => t.kind === "income").reduce((s, t) => s + Number(t.amount), 0);
   const expense = transactions.filter((t) => t.kind === "expense").reduce((s, t) => s + Number(t.amount), 0);
 
@@ -107,7 +111,7 @@ export function TransactionsManager({
   return (
     <>
       {/* Filter */}
-      <Card tilt={false} className="mb-4">
+      <Card className="mb-4">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -119,7 +123,7 @@ export function TransactionsManager({
             <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-mute" />
             <Input value={f.q} onChange={(e) => setF({ ...f, q: e.target.value })} placeholder="Cari catatan..." className="!pl-10" aria-label="Cari catatan" />
           </div>
-          <Button type="button" variant="ghost" small onClick={() => setShowFilters((s) => !s)} aria-expanded={showFilters}>
+          <Button type="button" variant="secondary" small onClick={() => setShowFilters((s) => !s)} aria-expanded={showFilters}>
             <Filter size={16} /> Filter
           </Button>
         </form>
@@ -149,7 +153,7 @@ export function TransactionsManager({
                 <option value="">Semua</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.icon} {c.name}
+                    {c.name}
                   </option>
                 ))}
               </Select>
@@ -159,16 +163,16 @@ export function TransactionsManager({
                 <option value="">Semua</option>
                 {wallets.map((w) => (
                   <option key={w.id} value={w.id}>
-                    {w.icon} {w.name}
+                    {w.name}
                   </option>
                 ))}
               </Select>
             </Field>
             <div className="mb-3 flex items-end gap-2">
-              <Button type="submit" small variant="blue">
+              <Button type="submit" small>
                 Terapkan
               </Button>
-              <Button type="button" small variant="ghost" onClick={() => { const e = { from: "", to: "", kind: "", category: "", wallet: "", q: "" }; setF(e); applyFilters(e); }}>
+              <Button type="button" small variant="secondary" onClick={() => { const e = { from: "", to: "", kind: "", category: "", wallet: "", q: "" }; setF(e); applyFilters(e); }}>
                 Reset
               </Button>
             </div>
@@ -185,63 +189,51 @@ export function TransactionsManager({
       <Can perm="transactions.create">
         <div className="mb-4 hidden lg:block">
           <Button onClick={() => setForm(blank())} disabled={!wallets.length}>
-            + Catat Transaksi
+            <Plus size={16} /> Catat Transaksi
           </Button>
         </div>
       </Can>
 
       {wallets.length === 0 && (
         <EmptyState
-          emoji="👛"
+          icon="wallet"
           title="Belum punya dompet"
           text="Transaksi dicatat ke sebuah dompet. Buat dompet dulu ya."
-          action={<Link href="/wallets" className="btn3d">Ke Dompet</Link>}
+          action={<Link href="/wallets" className="btn">Ke Dompet</Link>}
         />
       )}
 
       {wallets.length > 0 && transactions.length === 0 && (
-        <EmptyState emoji="📜" title="Tidak ada catatan" text="Belum ada transaksi yang cocok. Catat satu dan dapatkan +10 XP!" />
+        <EmptyState art="transactions" title="Tidak ada catatan" text="Belum ada transaksi yang cocok. Catat satu dan dapatkan +10 XP!" />
       )}
 
       <div className="space-y-4">
         {[...groups.entries()].map(([day, list]) => (
           <section key={day}>
-            <h3 className="mb-1.5 px-1 text-sm font-extrabold uppercase tracking-wide text-mute">{fmtDay(day)}</h3>
-            <Card tilt={false} className="divide-y divide-white/10 !p-2">
+            <h3 className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-[0.1em] text-mute">{fmtDay(day)}</h3>
+            <Card className="divide-y divide-white/[0.06] !p-1.5">
               {list.map((t) => (
                 <div key={t.id} className="flex items-center gap-3 px-2 py-2.5">
-                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-xl" style={{ background: (t.categories?.color ?? "#94a3b8") + "33" }}>
-                    {t.categories?.icon ?? "🪙"}
-                  </span>
+                  <IconTile icon={t.categories?.icon} color={t.categories?.color ?? "#94a3b8"} size={42} />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-bold">{t.note || t.categories?.name || "Tanpa catatan"}</p>
-                    <p className="truncate text-xs text-mute">
-                      {t.categories?.name ?? "Tanpa kategori"} · {t.wallets?.icon} {t.wallets?.name}
+                    <p className="truncate text-sm font-semibold">{t.note || t.categories?.name || "Tanpa catatan"}</p>
+                    <p className="flex items-center gap-1 truncate text-xs text-mute">
+                      {t.categories?.name ?? "Tanpa kategori"} · <AppIcon name={t.wallets?.icon} size={12} className="shrink-0" /> <span className="truncate">{t.wallets?.name}</span>
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className={`font-display text-lg ${t.kind === "income" ? "text-zamrud" : "text-rubi"}`}>
-                      {t.kind === "income" ? "+" : "-"}
-                      {rupiah(t.amount)}
-                    </p>
-                    <div className="flex justify-end gap-3 text-xs font-extrabold">
-                      <Can perm="transactions.update">
-                        <button
-                          className="text-volt hover:underline"
-                          onClick={() =>
-                            setForm({ id: t.id, kind: t.kind, amount: String(t.amount), wallet_id: t.wallet_id, category_id: t.category_id ?? "", occurred_on: t.occurred_on, note: t.note ?? "" })
-                          }
-                        >
-                          Ubah
-                        </button>
-                      </Can>
-                      <Can perm="transactions.delete">
-                        <button className="text-rubi hover:underline" onClick={() => setDel(t)}>
-                          Hapus
-                        </button>
-                      </Can>
-                    </div>
-                  </div>
+                  <p className={`shrink-0 font-display text-[0.95rem] font-bold ${t.kind === "income" ? "text-emerald" : "text-rose"}`}>
+                    {t.kind === "income" ? "+" : "-"}
+                    {rupiah(t.amount)}
+                  </p>
+                  <RowMenu
+                    label="Aksi transaksi"
+                    items={[
+                      ...(canUpdate
+                        ? [{ label: "Ubah", icon: <Pencil size={16} />, onClick: () => setForm({ id: t.id, kind: t.kind, amount: String(t.amount), wallet_id: t.wallet_id, category_id: t.category_id ?? "", occurred_on: t.occurred_on, note: t.note ?? "" }) }]
+                        : []),
+                      ...(canDelete ? [{ label: "Hapus", icon: <Trash2 size={16} />, danger: true, onClick: () => setDel(t) }] : []),
+                    ]}
+                  />
                 </div>
               ))}
             </Card>
@@ -255,7 +247,7 @@ export function TransactionsManager({
         title={form?.id ? "Ubah Transaksi" : "Catat Transaksi"}
         footer={
           <>
-            <Button variant="ghost" onClick={closeForm}>
+            <Button variant="secondary" onClick={closeForm}>
               Batal
             </Button>
             <Button variant={form?.kind === "income" ? "green" : "red"} loading={busy} onClick={save}>
@@ -281,7 +273,7 @@ export function TransactionsManager({
               <Select value={form.wallet_id} onChange={(e) => setForm({ ...form, wallet_id: e.target.value })}>
                 {wallets.map((w) => (
                   <option key={w.id} value={w.id}>
-                    {w.icon} {w.name}
+                    {w.name}
                   </option>
                 ))}
               </Select>
@@ -291,7 +283,7 @@ export function TransactionsManager({
                 <option value="">Tanpa kategori</option>
                 {formCats.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.icon} {c.name}
+                    {c.name}
                     {c.user_id ? " (pribadi)" : ""}
                   </option>
                 ))}

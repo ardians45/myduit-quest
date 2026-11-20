@@ -6,9 +6,13 @@ import { friendlyError } from "@/lib/errors";
 import { useGame } from "@/components/game/GameFeedback";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { EmojiPicker, Field, Input, Select, TextArea } from "@/components/ui/Form";
+import { Field, IconPicker, Input, Select, Switch, TextArea } from "@/components/ui/Form";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
 import { Badge, EmptyState } from "@/components/ui/Misc";
+import { RowMenu } from "@/components/ui/RowMenu";
+import { AchievementBadge } from "@/components/art";
+import { PICKER_SETS } from "@/lib/icons";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import type { Achievement } from "@/lib/types";
 
 const CONDITIONS: { value: string; label: string; unit: string }[] = [
@@ -29,7 +33,7 @@ export function AchievementsManager({ achievements, unlocked }: { achievements: 
   const [del, setDel] = useState<Achievement | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const blank = (): Form => ({ code: "", name: "", description: "", icon: "🏆", condition_type: "tx_count", threshold: "1", xp_reward: "50", is_active: true });
+  const blank = (): Form => ({ code: "", name: "", description: "", icon: "trophy", condition_type: "tx_count", threshold: "1", xp_reward: "50", is_active: true });
 
   async function save() {
     if (!form) return;
@@ -73,38 +77,38 @@ export function AchievementsManager({ achievements, unlocked }: { achievements: 
   return (
     <>
       <div className="mb-4">
-        <Button onClick={() => setForm(blank())}>+ Achievement Baru</Button>
+        <Button onClick={() => setForm(blank())}>
+          <Plus size={16} /> Achievement Baru
+        </Button>
       </div>
-      {achievements.length === 0 && <EmptyState emoji="🏆" title="Belum ada achievement" />}
+      {achievements.length === 0 && <EmptyState icon="trophy" title="Belum ada achievement" />}
       <div className="grid gap-3 sm:grid-cols-2">
         {achievements.map((a) => (
-          <Card key={a.id} tilt={false} className={a.is_active ? "" : "opacity-60"}>
+          <Card key={a.id} className={a.is_active ? "" : "opacity-60"}>
             <div className="flex items-start gap-3">
-              <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border-[3px] border-gold/60 bg-gold/10 text-3xl">{a.icon}</span>
+              <AchievementBadge icon={a.icon} size={60} locked={!a.is_active} />
               <div className="min-w-0 flex-1">
-                <p className="font-display text-lg leading-tight">{a.name}</p>
+                <p className="font-display text-base font-bold leading-tight">{a.name}</p>
                 <p className="text-sm text-mute">{a.description}</p>
                 <div className="mt-1 flex flex-wrap gap-2">
-                  <Badge color="#38bdf8">
+                  <Badge color="#22d3ee">
                     {a.threshold} {unit(a.condition_type)}
                   </Badge>
-                  <Badge color="#fbbf24">+{a.xp_reward} XP</Badge>
-                  <Badge color="#a78bfa">{unlocked[a.id] ?? 0} pemain</Badge>
+                  <Badge color="#f5b83d">+{a.xp_reward} XP</Badge>
+                  <Badge color="#8b5cf6">{unlocked[a.id] ?? 0} pemain</Badge>
                   {!a.is_active && <Badge color="#94a3b8">Nonaktif</Badge>}
                 </div>
               </div>
-            </div>
-            <div className="mt-3 flex gap-2">
-              <Button
-                small
-                variant="blue"
-                onClick={() => setForm({ id: a.id, code: a.code, name: a.name, description: a.description ?? "", icon: a.icon, condition_type: a.condition_type, threshold: String(a.threshold), xp_reward: String(a.xp_reward), is_active: a.is_active })}
-              >
-                Ubah
-              </Button>
-              <Button small variant="red" onClick={() => setDel(a)}>
-                Hapus
-              </Button>
+              <RowMenu
+                items={[
+                  {
+                    label: "Ubah",
+                    icon: <Pencil size={15} />,
+                    onClick: () => setForm({ id: a.id, code: a.code, name: a.name, description: a.description ?? "", icon: a.icon, condition_type: a.condition_type, threshold: String(a.threshold), xp_reward: String(a.xp_reward), is_active: a.is_active }),
+                  },
+                  { label: "Hapus", icon: <Trash2 size={15} />, danger: true, onClick: () => setDel(a) },
+                ]}
+              />
             </div>
           </Card>
         ))}
@@ -116,7 +120,7 @@ export function AchievementsManager({ achievements, unlocked }: { achievements: 
         title={form?.id ? "Ubah Achievement" : "Achievement Baru"}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setForm(null)}>
+            <Button variant="secondary" onClick={() => setForm(null)}>
               Batal
             </Button>
             <Button loading={busy} onClick={save}>
@@ -153,11 +157,11 @@ export function AchievementsManager({ achievements, unlocked }: { achievements: 
                 <Input type="number" min={0} value={form.xp_reward} onChange={(e) => setForm({ ...form, xp_reward: e.target.value })} />
               </Field>
             </div>
-            <EmojiPicker value={form.icon} onChange={(icon) => setForm({ ...form, icon })} options={["🏆", "👣", "📒", "📜", "🔥", "☄️", "🛡️", "🐉", "🎒", "🎯", "💎", "⭐"]} />
-            <label className="mb-2 flex items-center gap-3 font-bold">
-              <input type="checkbox" className="h-5 w-5 accent-amber-400" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
-              Aktif
-            </label>
+            <IconPicker value={form.icon} onChange={(icon) => setForm({ ...form, icon })} groups={PICKER_SETS.achievement} />
+            <div className="mb-2 flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5">
+              <span className="text-sm font-semibold">Aktif</span>
+              <Switch checked={form.is_active} onChange={(v) => setForm({ ...form, is_active: v })} label="Aktif" />
+            </div>
             <button type="submit" className="hidden" />
           </form>
         )}

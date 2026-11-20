@@ -2,18 +2,20 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { friendlyError } from "@/lib/errors";
 import { monthLabel, rupiah, shiftMonth } from "@/lib/format";
 import { useGame } from "@/components/game/GameFeedback";
-import { Can } from "@/components/layout/SessionProvider";
+import { Can, useCan } from "@/components/layout/SessionProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input, Select } from "@/components/ui/Form";
 import { HpBar } from "@/components/ui/HPBar";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
-import { EmptyState } from "@/components/ui/Misc";
+import { Badge, EmptyState, IconTile } from "@/components/ui/Misc";
+import { RowMenu } from "@/components/ui/RowMenu";
+import { HpShield } from "@/components/art";
 import type { BudgetStatus, Category } from "@/lib/types";
 
 interface Form { id?: string; category_id: string; limit_amount: string }
@@ -24,6 +26,8 @@ export function BudgetsManager({ month, budgets, categories, userId }: { month: 
   const [form, setForm] = useState<Form | null>(null);
   const [del, setDel] = useState<BudgetStatus | null>(null);
   const [busy, setBusy] = useState(false);
+  const canUpdate = useCan("budgets.update");
+  const canDelete = useCan("budgets.delete");
   const catMap = new Map(categories.map((c) => [c.id, c]));
   const used = new Set(budgets.map((b) => b.category_id));
   const available = categories.filter((c) => !used.has(c.id));
@@ -62,57 +66,61 @@ export function BudgetsManager({ month, budgets, categories, userId }: { month: 
     <>
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Button small variant="ghost" aria-label="Bulan sebelumnya" onClick={() => router.push(`/budgets?m=${shiftMonth(month, -1)}`)}>
+          <Button small variant="secondary" aria-label="Bulan sebelumnya" onClick={() => router.push(`/budgets?m=${shiftMonth(month, -1)}`)}>
             <ChevronLeft size={18} />
           </Button>
-          <span className="min-w-36 text-center font-display text-xl">{monthLabel(month)}</span>
-          <Button small variant="ghost" aria-label="Bulan berikutnya" onClick={() => router.push(`/budgets?m=${shiftMonth(month, 1)}`)}>
+          <span className="min-w-36 text-center font-display text-lg font-bold">{monthLabel(month)}</span>
+          <Button small variant="secondary" aria-label="Bulan berikutnya" onClick={() => router.push(`/budgets?m=${shiftMonth(month, 1)}`)}>
             <ChevronRight size={18} />
           </Button>
         </div>
         <Can perm="budgets.create">
           <Button disabled={!available.length} onClick={() => setForm({ category_id: available[0]?.id ?? "", limit_amount: "" })}>
-            + Anggaran (+20 XP)
+            <Plus size={16} /> Anggaran (+20 XP)
           </Button>
         </Can>
       </div>
 
       {budgets.length === 0 ? (
-        <EmptyState emoji="🛡️" title="Belum ada perisai bulan ini" text="Pasang anggaran untuk kategori pengeluaran. Makin banyak kamu belanja, makin turun HP-nya." />
+        <EmptyState icon="shield-check" title="Belum ada perisai bulan ini" text="Pasang anggaran untuk kategori pengeluaran. Makin banyak kamu belanja, makin turun HP-nya." />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {budgets.map((b) => {
             const c = catMap.get(b.category_id);
             const ratio = Number(b.spent) / Number(b.limit_amount);
             const left = Math.max(0, 100 - ratio * 100);
             const over = Number(b.spent) > Number(b.limit_amount);
+            const tone = over || left <= 25 ? "#fb7185" : left <= 50 ? "#f5b83d" : "#34d399";
             return (
-              <Card key={b.id}>
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <span className="font-display text-xl">
-                    {c?.icon} {c?.name ?? "Kategori"}
-                  </span>
-                  <span className={`font-display ${over ? "text-rubi" : left > 50 ? "text-zamrud" : "text-gold"}`}>{over ? "HP HABIS!" : `${Math.round(left)}% HP`}</span>
+              <Card key={b.id} lift>
+                <div className="flex items-center gap-3">
+                  <HpShield pct={left} size={44} />
+                  <div className="min-w-0 flex-1">
+                    <p className="flex items-center gap-2 font-display text-base font-bold">
+                      <IconTile icon={c?.icon} color={c?.color ?? "#94a3b8"} size={26} />
+                      <span className="truncate">{c?.name ?? "Kategori"}</span>
+                    </p>
+                    <div className="mt-1">
+                      <Badge color={tone}>{over ? "HP habis" : `${Math.round(left)}% HP`}</Badge>
+                    </div>
+                  </div>
+                  <RowMenu
+                    label={`Aksi ${c?.name ?? "anggaran"}`}
+                    items={[
+                      ...(canUpdate ? [{ label: "Ubah", icon: <Pencil size={16} />, onClick: () => setForm({ id: b.id, category_id: b.category_id, limit_amount: String(b.limit_amount) }) }] : []),
+                      ...(canDelete ? [{ label: "Hapus", icon: <Trash2 size={16} />, danger: true, onClick: () => setDel(b) }] : []),
+                    ]}
+                  />
                 </div>
-                <HpBar pct={left} />
+                <div className="mt-4">
+                  <HpBar pct={left} />
+                </div>
                 <p className="mt-2 text-sm text-mute">
-                  Terpakai <b className="text-white">{rupiah(b.spent)}</b> dari {rupiah(b.limit_amount)}
+                  <b className="font-display text-white">{rupiah(b.spent)}</b> dari {rupiah(b.limit_amount)}
                 </p>
-                <p className={`text-xs font-bold ${over ? "text-rubi" : "text-mute"}`}>
+                <p className={`text-xs font-semibold ${over ? "text-rose" : "text-mute"}`}>
                   {over ? `Lewat ${rupiah(Number(b.spent) - Number(b.limit_amount))}` : `Sisa ${rupiah(Number(b.limit_amount) - Number(b.spent))}`}
                 </p>
-                <div className="mt-3 flex gap-2">
-                  <Can perm="budgets.update">
-                    <Button small variant="blue" onClick={() => setForm({ id: b.id, category_id: b.category_id, limit_amount: String(b.limit_amount) })}>
-                      Ubah
-                    </Button>
-                  </Can>
-                  <Can perm="budgets.delete">
-                    <Button small variant="red" onClick={() => setDel(b)}>
-                      Hapus
-                    </Button>
-                  </Can>
-                </div>
               </Card>
             );
           })}
@@ -125,7 +133,7 @@ export function BudgetsManager({ month, budgets, categories, userId }: { month: 
         title={form?.id ? "Ubah Anggaran" : `Anggaran ${monthLabel(month)}`}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setForm(null)}>
+            <Button variant="secondary" onClick={() => setForm(null)}>
               Batal
             </Button>
             <Button loading={busy} onClick={save}>
@@ -140,7 +148,7 @@ export function BudgetsManager({ month, budgets, categories, userId }: { month: 
               <Select value={form.category_id} disabled={!!form.id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}>
                 {(form.id ? categories : available).map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.icon} {c.name}
+                    {c.name}
                   </option>
                 ))}
               </Select>

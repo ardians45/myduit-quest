@@ -5,10 +5,13 @@ import { createClient } from "@/lib/supabase/client";
 import { friendlyError } from "@/lib/errors";
 import { useGame } from "@/components/game/GameFeedback";
 import { Button } from "@/components/ui/Button";
+import { RowMenu } from "@/components/ui/RowMenu";
+import { PICKER_SETS } from "@/lib/icons";
+import { CheckCircle2, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
-import { EmojiPicker, Field, Input, TextArea } from "@/components/ui/Form";
+import { IconPicker, Field, Input, Switch, TextArea } from "@/components/ui/Form";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
-import { Badge, EmptyState } from "@/components/ui/Misc";
+import { Badge, EmptyState, IconTile } from "@/components/ui/Misc";
 import type { Challenge } from "@/lib/types";
 
 interface Form { id?: string; title: string; description: string; icon: string; xp_reward: string; is_active: boolean }
@@ -74,44 +77,50 @@ export function ChallengesManager({
     <>
       {canManage && (
         <div className="mb-4">
-          <Button onClick={() => setForm({ title: "", description: "", icon: "🎯", xp_reward: "25", is_active: true })}>+ Tantangan Baru</Button>
+          <Button onClick={() => setForm({ title: "", description: "", icon: "target", xp_reward: "25", is_active: true })}><Plus size={16} /> Tambah Tantangan</Button>
         </div>
       )}
 
-      {list.length === 0 && <EmptyState emoji="🎯" title="Belum ada tantangan" text={canManage ? "Buat tantangan harian pertama untuk para pemain." : "Mentor belum menerbitkan tantangan. Cek lagi nanti!"} />}
+      {list.length === 0 && <EmptyState icon="target" title="Belum ada tantangan" text={canManage ? "Buat tantangan harian pertama untuk para pemain." : "Mentor belum menerbitkan tantangan. Cek lagi nanti!"} />}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2">
         {list.map((c) => {
           const done = claimedToday.includes(c.id);
           return (
             <Card key={c.id} className={!c.is_active ? "opacity-60" : ""}>
               <div className="flex items-start gap-3">
-                <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border-[3px] border-night-500 bg-black/25 text-3xl">{c.icon}</span>
+                <IconTile icon={c.icon} color="#8b5cf6" size={46} />
                 <div className="min-w-0 flex-1">
-                  <p className="font-display text-xl leading-tight">{c.title}</p>
-                  <div className="mt-1 flex flex-wrap gap-2">
-                    <Badge color="#38bdf8">+{c.xp_reward} XP</Badge>
+                  <p className="font-display text-base font-bold leading-tight">{c.title}</p>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    <Badge color="#a78bfa">
+                      <Sparkles size={11} /> +{c.xp_reward} XP
+                    </Badge>
                     {!c.is_active && <Badge color="#94a3b8">Nonaktif</Badge>}
-                    {canManage && <Badge color="#a78bfa">{totalClaims[c.id] ?? 0}x diklaim</Badge>}
+                    {canManage && <Badge color="#22d3ee">{totalClaims[c.id] ?? 0}x diklaim</Badge>}
                   </div>
                 </div>
+                {canManage && (
+                  <RowMenu
+                    items={[
+                      { label: "Ubah", icon: <Pencil size={15} />, onClick: () => setForm({ id: c.id, title: c.title, description: c.description ?? "", icon: c.icon, xp_reward: String(c.xp_reward), is_active: c.is_active }) },
+                      { label: "Hapus", icon: <Trash2 size={15} />, danger: true, onClick: () => setDel(c) },
+                    ]}
+                  />
+                )}
               </div>
               {c.description && <p className="mt-2 text-sm text-mute">{c.description}</p>}
               <div className="mt-3 flex flex-wrap gap-2">
                 {canClaim && (
-                  <Button small variant="green" disabled={done || !c.is_active} loading={claiming === c.id} onClick={() => claim(c)}>
-                    {done ? "Sudah diklaim hari ini" : `Klaim +${c.xp_reward} XP`}
+                  <Button small variant={done ? "secondary" : "success"} disabled={done || !c.is_active} loading={claiming === c.id} onClick={() => claim(c)}>
+                    {done ? (
+                      <>
+                        <CheckCircle2 size={15} className="text-emerald" /> Sudah diklaim hari ini
+                      </>
+                    ) : (
+                      `Klaim +${c.xp_reward} XP`
+                    )}
                   </Button>
-                )}
-                {canManage && (
-                  <>
-                    <Button small variant="blue" onClick={() => setForm({ id: c.id, title: c.title, description: c.description ?? "", icon: c.icon, xp_reward: String(c.xp_reward), is_active: c.is_active })}>
-                      Ubah
-                    </Button>
-                    <Button small variant="red" onClick={() => setDel(c)}>
-                      Hapus
-                    </Button>
-                  </>
                 )}
               </div>
             </Card>
@@ -125,7 +134,7 @@ export function ChallengesManager({
         title={form?.id ? "Ubah Tantangan" : "Tantangan Baru"}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setForm(null)}>
+            <Button variant="secondary" onClick={() => setForm(null)}>
               Batal
             </Button>
             <Button loading={busy} onClick={save}>
@@ -145,11 +154,11 @@ export function ChallengesManager({
             <Field label="Hadiah XP">
               <Input type="number" min={1} max={1000} value={form.xp_reward} onChange={(e) => setForm({ ...form, xp_reward: e.target.value })} />
             </Field>
-            <EmojiPicker value={form.icon} onChange={(icon) => setForm({ ...form, icon })} options={["🎯", "📝", "🛡️", "🧘", "🐷", "🗂️", "🔥", "💡", "☕", "🚀"]} />
-            <label className="mb-2 flex items-center gap-3 font-bold">
-              <input type="checkbox" className="h-5 w-5 accent-amber-400" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
-              Aktif (bisa diklaim pemain)
-            </label>
+            <IconPicker value={form.icon} onChange={(icon) => setForm({ ...form, icon })} groups={PICKER_SETS.challenge} />
+            <div className="mb-2 flex items-center justify-between gap-3 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5">
+              <span className="text-sm font-semibold">Aktif (bisa diklaim pemain)</span>
+              <Switch checked={form.is_active} onChange={(v) => setForm({ ...form, is_active: v })} label="Aktif" />
+            </div>
             <button type="submit" className="hidden" />
           </form>
         )}

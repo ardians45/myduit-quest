@@ -17,7 +17,7 @@ export default async function AdminAchievementsPage() {
   (ua.data ?? []).forEach((u) => (unlocked[u.achievement_id] = (unlocked[u.achievement_id] ?? 0) + 1));
   return (
     <>
-      <PageHeader title="Achievement" subtitle="Master lencana yang bisa dibuka pemain" icon="🏆" />
+      <PageHeader title="Achievement" subtitle="Master lencana yang bisa dibuka pemain" icon="trophy" />
       <AchievementsManager achievements={(ach.data ?? []) as Achievement[]} unlocked={unlocked} />
     </>
   );

@@ -19,7 +19,7 @@ export default async function AdminRolesPage() {
   (users.data ?? []).forEach((u) => u.role_id && (userCount[u.role_id] = (userCount[u.role_id] ?? 0) + 1));
   return (
     <>
-      <PageHeader title="Role & Akses" subtitle="Kelola role dan matriks permission. Perubahan langsung tersimpan." icon="🔑" />
+      <PageHeader title="Role & Akses" subtitle="Kelola role dan matriks permission. Perubahan langsung tersimpan." icon="shield-check" />
       <RolesManager
         roles={(roles.data ?? []) as Role[]}
         permissions={(perms.data ?? []) as Permission[]}

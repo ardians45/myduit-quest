@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { Search, UserCheck, UserX } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { friendlyError } from "@/lib/errors";
 import { fmtDate, levelTitle, num } from "@/lib/format";
@@ -12,6 +12,7 @@ import { Card } from "@/components/ui/Card";
 import { Input, Select } from "@/components/ui/Form";
 import { ConfirmDialog } from "@/components/ui/Modal";
 import { Badge, EmptyState } from "@/components/ui/Misc";
+import { Avatar } from "@/components/art";
 import type { Profile, Role } from "@/lib/types";
 
 export function UsersManager({ users, roles, selfId }: { users: Profile[]; roles: Role[]; selfId: string }) {
@@ -46,18 +47,18 @@ export function UsersManager({ users, roles, selfId }: { users: Profile[]; roles
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari nama atau email..." className="!pl-10" aria-label="Cari pengguna" />
       </div>
 
-      {list.length === 0 && <EmptyState emoji="🔍" title="Pengguna tidak ditemukan" />}
+      {list.length === 0 && <EmptyState icon="circle-dot" title="Pengguna tidak ditemukan" />}
 
       <div className="grid gap-3">
         {list.map((u) => {
           const self = u.id === selfId;
           return (
-            <Card key={u.id} tilt={false} className={u.is_active ? "" : "opacity-60"}>
+            <Card key={u.id} className={u.is_active ? "" : "opacity-60"}>
               <div className="flex flex-wrap items-center gap-3">
-                <span className="grid h-12 w-12 place-items-center rounded-2xl border-[3px] border-night-500 bg-black/25 text-2xl">{u.avatar}</span>
+                <Avatar name={u.avatar} size={44} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-display text-lg leading-tight">
-                    {u.display_name} {self && <Badge color="#38bdf8">Kamu</Badge>} {!u.is_active && <Badge color="#f43f5e">Nonaktif</Badge>}
+                  <p className="truncate font-display text-base font-bold leading-tight">
+                    {u.display_name} {self && <Badge color="#22d3ee">Kamu</Badge>} {!u.is_active && <Badge color="#fb7185">Nonaktif</Badge>}
                   </p>
                   <p className="truncate text-xs text-mute">
                     {u.email} · gabung {fmtDate(u.created_at)} · Lv {u.level} {levelTitle(u.level)} · {num(u.xp)} XP
@@ -80,12 +81,12 @@ export function UsersManager({ users, roles, selfId }: { users: Profile[]; roles
                   </Select>
                   <Can perm="users.manage">
                     {u.is_active ? (
-                      <Button small variant="red" disabled={self} onClick={() => setTarget(u)}>
-                        Nonaktifkan
+                      <Button small variant="danger" disabled={self} onClick={() => setTarget(u)}>
+                        <UserX size={15} /> Nonaktifkan
                       </Button>
                     ) : (
-                      <Button small variant="green" loading={busy} onClick={() => setActive(u, true)}>
-                        Aktifkan
+                      <Button small variant="success" loading={busy} onClick={() => setActive(u, true)}>
+                        <UserCheck size={15} /> Aktifkan
                       </Button>
                     )}
                   </Can>
