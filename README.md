@@ -4,7 +4,7 @@ Sistem Informasi Keuangan Pribadi bergaya game. Mencatat keuangan terasa seperti
 
 Project UAS: *Rancangan Aplikasi Sistem Informasi Keuangan Pribadi* (Ardian Setiawan, 231011402665, 07TPLK005).
 
-- **URL hosting:** `https://GANTI-DENGAN-URL-VERCEL.vercel.app` (isi setelah deploy)
+- **URL hosting:** `https://myduit-gweh.vercel.app` (isi setelah deploy)
 - **Akun demo:** lihat tabel di bawah
 
 ## Fitur
