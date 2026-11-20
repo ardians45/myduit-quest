@@ -1,73 +1,65 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import { ReactNode, MouseEventHandler } from 'react';
+import Link from "next/link";
+import type { ButtonHTMLAttributes, ReactNode, MouseEvent } from "react";
 
-interface ButtonProps {
-  children?: ReactNode;
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
-  isLoading?: boolean;
-  leftIcon?: ReactNode;
-  rightIcon?: ReactNode;
-  fullWidth?: boolean;
-  className?: string;
-  disabled?: boolean;
-  type?: 'button' | 'submit' | 'reset';
-  onClick?: MouseEventHandler<HTMLButtonElement>;
+type Variant = "gold" | "green" | "red" | "blue" | "ghost";
+
+const VARIANT: Record<Variant, string> = {
+  gold: "",
+  green: "btn-green",
+  red: "btn-red",
+  blue: "btn-blue",
+  ghost: "btn-ghost",
+};
+
+function buzz() {
+  try {
+    navigator.vibrate?.(10);
+  } catch {
+    /* perangkat tidak mendukung getar */
+  }
 }
 
-export function Button({
-  children,
-  variant = 'primary',
-  size = 'md',
-  isLoading = false,
-  leftIcon,
-  rightIcon,
-  fullWidth = false,
-  className = '',
-  disabled,
-  type = 'button',
-  onClick,
-}: ButtonProps) {
-  const baseStyles = `
-    inline-flex items-center justify-center gap-2
-    font-semibold rounded-xl transition-all duration-200
-    disabled:opacity-50 disabled:cursor-not-allowed
-    ${fullWidth ? 'w-full' : ''}
-  `;
-  
-  const sizeStyles = {
-    sm: 'px-4 py-2 text-sm',
-    md: 'px-6 py-3 text-base',
-    lg: 'px-8 py-4 text-lg',
-  };
-  
-  const variantStyles = {
-    primary: 'btn-primary',
-    secondary: 'btn-secondary',
-    danger: 'bg-danger text-white hover:bg-danger/90',
-    ghost: 'bg-transparent text-text-primary hover:bg-primary/10',
-  };
-  
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: Variant;
+  small?: boolean;
+  loading?: boolean;
+}
+
+/** Tombol 3D: border bawah tebal, kilau atas, turun saat ditekan, getar di HP. */
+export function Button({ variant = "gold", small, loading, className = "", onClick, disabled, children, ...rest }: ButtonProps) {
   return (
-    <motion.button
-      whileHover={{ scale: disabled || isLoading ? 1 : 1.02 }}
-      whileTap={{ scale: disabled || isLoading ? 1 : 0.98 }}
-      className={`${baseStyles} ${sizeStyles[size]} ${variantStyles[variant]} ${className}`}
-      disabled={disabled || isLoading}
-      type={type}
-      onClick={onClick}
+    <button
+      {...rest}
+      disabled={disabled || loading}
+      onClick={(e: MouseEvent<HTMLButtonElement>) => {
+        buzz();
+        onClick?.(e);
+      }}
+      className={`btn3d ${VARIANT[variant]} ${small ? "btn-sm" : ""} ${className}`}
     >
-      {isLoading ? (
-        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-      ) : (
-        <>
-          {leftIcon}
-          {children}
-          {rightIcon}
-        </>
-      )}
-    </motion.button>
+      {loading ? <span className="animate-pulse">Tunggu...</span> : children}
+    </button>
+  );
+}
+
+export function LinkButton({
+  href,
+  variant = "gold",
+  small,
+  className = "",
+  children,
+}: {
+  href: string;
+  variant?: Variant;
+  small?: boolean;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <Link href={href} onClick={buzz} className={`btn3d ${VARIANT[variant]} ${small ? "btn-sm" : ""} ${className}`}>
+      {children}
+    </Link>
   );
 }

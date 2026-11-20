@@ -1,56 +1,37 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from "framer-motion";
 
-interface HPBarProps {
-  percentage: number;
-  showLabel?: boolean;
-  size?: 'sm' | 'md' | 'lg';
-  animate?: boolean;
-}
-
-export function HPBar({ 
-  percentage, 
-  showLabel = false, 
-  size = 'md',
-  animate = true 
-}: HPBarProps) {
-  const clampedPercentage = Math.max(0, Math.min(100, percentage));
-  
-  const getStatus = () => {
-    if (clampedPercentage > 50) return 'safe';
-    if (clampedPercentage > 25) return 'warning';
-    return 'danger';
-  };
-  
-  const sizeStyles = {
-    sm: 'h-2',
-    md: 'h-3',
-    lg: 'h-4',
-  };
-  
-  const status = getStatus();
-  
+/**
+ * Bar HP beranimasi. `pct` = sisa HP (0-100).
+ * tone "auto": hijau > 50, kuning > 25, merah selebihnya.
+ */
+export function HpBar({
+  pct,
+  tone = "auto",
+  className = "",
+}: {
+  pct: number;
+  tone?: "auto" | "xp" | "boss";
+  className?: string;
+}) {
+  const reduce = useReducedMotion();
+  const v = Math.max(0, Math.min(100, pct));
+  const cls = tone === "xp" ? "xp" : tone === "boss" ? "boss" : v > 50 ? "" : v > 25 ? "warn" : "danger";
   return (
-    <div className="w-full">
-      <div className={`hp-bar ${sizeStyles[size]}`}>
-        <motion.div
-          className={`hp-bar-fill ${status}`}
-          initial={animate ? { width: 0 } : false}
-          animate={{ width: `${clampedPercentage}%` }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
-        />
-      </div>
-      {showLabel && (
-        <div className="flex justify-between mt-1 text-sm">
-          <span className={`font-medium ${
-            status === 'safe' ? 'text-success' :
-            status === 'warning' ? 'text-warning' : 'text-danger'
-          }`}>
-            {clampedPercentage}% HP
-          </span>
-        </div>
-      )}
+    <div
+      className={`hp ${className}`}
+      role="progressbar"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(v)}
+    >
+      <motion.div
+        className={`hp-fill ${cls}`}
+        initial={reduce ? false : { width: "0%" }}
+        animate={{ width: `${v}%` }}
+        transition={{ duration: reduce ? 0 : 0.9, ease: [0.22, 1, 0.36, 1] }}
+      />
     </div>
   );
 }

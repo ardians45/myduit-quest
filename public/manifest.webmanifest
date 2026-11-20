@@ -1,0 +1,16 @@
+{
+  "name": "Myduit Gweh",
+  "short_name": "Myduit Gweh",
+  "description": "Catat keuangan rasa main game.",
+  "lang": "id",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0e0d33",
+  "theme_color": "#0e0d33",
+  "icons": [
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icons/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

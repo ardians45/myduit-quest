@@ -1,49 +1,50 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import { ReactNode } from 'react';
+import { useRef, type CSSProperties, type ReactNode } from "react";
 
-interface CardProps {
-  children: ReactNode;
-  className?: string;
-  variant?: 'glass' | 'solid' | 'outline';
-  padding?: 'none' | 'sm' | 'md' | 'lg';
-  animate?: boolean;
-}
-
+/** Kartu 3D: tilt ringan saat hover (desktop saja, tanpa gyro). */
 export function Card({
   children,
-  className = '',
-  variant = 'glass',
-  padding = 'md',
-  animate = true,
-}: CardProps) {
-  const paddingStyles = {
-    none: '',
-    sm: 'p-3',
-    md: 'p-4',
-    lg: 'p-6',
-  };
-  
-  const variantStyles = {
-    glass: 'card-glass',
-    solid: 'bg-bg-card rounded-2xl shadow-md',
-    outline: 'bg-transparent border-2 border-primary/20 rounded-2xl',
-  };
-  
-  const Component = animate ? motion.div : 'div';
-  const animationProps = animate ? {
-    initial: { opacity: 0, y: 10 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.3 },
-  } : {};
-  
+  className = "",
+  gold,
+  tilt = true,
+  style,
+}: {
+  children: ReactNode;
+  className?: string;
+  gold?: boolean;
+  tilt?: boolean;
+  style?: CSSProperties;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  function onMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!tilt || e.pointerType !== "mouse") return;
+    const el = ref.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const r = el.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width - 0.5;
+    const py = (e.clientY - r.top) / r.height - 0.5;
+    el.style.setProperty("--ry", `${(px * 6).toFixed(2)}deg`);
+    el.style.setProperty("--rx", `${(-py * 6).toFixed(2)}deg`);
+  }
+  function onLeave() {
+    ref.current?.style.setProperty("--rx", "0deg");
+    ref.current?.style.setProperty("--ry", "0deg");
+  }
+
   return (
-    <Component
-      className={`${variantStyles[variant]} ${paddingStyles[padding]} ${className}`}
-      {...animationProps}
-    >
-      {children}
-    </Component>
+    <div className="tilt">
+      <div
+        ref={ref}
+        onPointerMove={onMove}
+        onPointerLeave={onLeave}
+        style={style}
+        className={`card3d ${gold ? "card-gold" : ""} ${tilt ? "" : "card-flat"} ${className}`}
+      >
+        {children}
+      </div>
+    </div>
   );
 }
